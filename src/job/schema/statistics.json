@@ -1,0 +1,24 @@
+{
+  "statistics": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "queueName": { "type": "string", "description": "Tên queue" },
+        "date": { "type": "string", "format": "date", "description": "Ngày thống kê (YYYY-MM-DD)" },
+        "totalJobs": { "type": "number", "default": 0, "description": "Tổng số job trong ngày" },
+        "completedJobs": { "type": "number", "default": 0, "description": "Số job hoàn thành" },
+        "failedJobs": { "type": "number", "default": 0, "description": "Số job thất bại" },
+        "delayedJobs": { "type": "number", "default": 0, "description": "Số job bị trì hoãn" },
+        "averageProcessingTime": { "type": "number", "default": 0, "description": "Thời gian xử lý trung bình (giây)" },
+        "maxProcessingTime": { "type": "number", "default": 0, "description": "Thời gian xử lý tối đa (giây)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo bản ghi" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật bản ghi" }
+      },
+      "required": ["queueName", "date"],
+      "indexes": [
+        { "key": { "queueName": 1, "date": 1 } }
+      ]
+    }
+  }
+}

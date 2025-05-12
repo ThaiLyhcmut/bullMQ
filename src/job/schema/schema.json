@@ -1,0 +1,163 @@
+{
+  "queues": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "waitingJobs": { "type": "number", "default": 0 },
+        "activeJobs": { "type": "number", "default": 0 },
+        "completedJobs": { "type": "number", "default": 0 },
+        "failedJobs": { "type": "number", "default": 0 },
+        "delayedJobs": { "type": "number", "default": 0 },
+        "pausedJobs": { "type": "number", "default": 0 },
+        "isPaused": { "type": "boolean", "default": false },
+        "lastProcessed": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "option": { "type": "object" }
+      },
+      "required": ["name"],
+      "indexes": [
+        { "key": { "name": 1 }, "unique": true }
+      ]
+    },
+    "example": [
+      {
+        "name": "email",
+        "waitingJobs": 10,
+        "activeJobs": 2,
+        "completedJobs": 150,
+        "failedJobs": 5,
+        "delayedJobs": 3,
+        "pausedJobs": 0,
+        "isPaused": false,
+        "lastProcessed": "2025-05-06T10:00:00Z",
+        "createdAt": "2025-05-01T08:00:00Z",
+        "updatedAt": "2025-05-06T10:00:00Z"
+      }
+    ]
+  },
+  "jobs": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "queueName": { "type": "string" },
+        "name": { "type": "string" },
+        "data": { "type": "object" },
+        "option": { "type": "object"},
+        "status": { "type": "string", "enum": ["waiting", "active", "completed", "failed", "delayed", "paused"] },
+        "progress": { "type": "number", "default": 0 },
+        "attemptsMade": { "type": "number", "default": 0 },
+        "maxAttempts": { "type": "number", "default": 3 },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" },
+        "processedOn": { "type": "string", "format": "date-time" },
+        "error": { "type": "string" },
+        "stacktrace": { "type": "array", "items": { "type": "string" } },
+        "result": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["jobId", "queueName", "name", "data", "status"],
+      "indexes": [
+        { "key": { "queueName": 1, "status": 1 } },
+        { "key": { "jobId": 1 } }
+      ]
+    },
+    "example": [
+      {
+        "jobId": "12345",
+        "queueName": "email",
+        "name": "process-job",
+        "data": { "email": "user@example.com", "subject": "Welcome Email" },
+        "status": "completed",
+        "progress": 100,
+        "attemptsMade": 1,
+        "maxAttempts": 3,
+        "startedAt": "2025-05-06T09:55:00Z",
+        "finishedAt": "2025-05-06T09:55:10Z",
+        "processedOn": "2025-05-06T09:55:00Z",
+        "error": null,
+        "stacktrace": [],
+        "result": { "status": "sent" },
+        "createdAt": "2025-05-06T09:54:50Z",
+        "updatedAt": "2025-05-06T09:55:10Z"
+      }
+    ]
+  },
+  "statistics": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "queueName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "totalJobs": { "type": "number", "default": 0 },
+        "completedJobs": { "type": "number", "default": 0 },
+        "failedJobs": { "type": "number", "default": 0 },
+        "delayedJobs": { "type": "number", "default": 0 },
+        "averageProcessingTime": { "type": "number", "default": 0 },
+        "maxProcessingTime": { "type": "number", "default": 0 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["queueName", "date"],
+      "indexes": [
+        { "key": { "queueName": 1, "date": 1 } }
+      ]
+    },
+    "example": [
+      {
+        "queueName": "email",
+        "date": "2025-05-06",
+        "totalJobs": 165,
+        "completedJobs": 150,
+        "failedJobs": 5,
+        "delayedJobs": 3,
+        "averageProcessingTime": 8.5,
+        "maxProcessingTime": 15.2,
+        "createdAt": "2025-05-06T00:00:00Z",
+        "updatedAt": "2025-05-06T23:59:59Z"
+      }
+    ]
+  },
+  "actions_log": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "enum": ["retry", "remove", "pause", "resume", "clean"] },
+        "queueName": { "type": "string" },
+        "jobId": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "details": { "type": "object" }
+      },
+      "required": ["action", "queueName", "performedBy", "timestamp"],
+      "indexes": [
+        { "key": { "queueName": 1, "timestamp": 1 } }
+      ]
+    },
+    "example": [
+      {
+        "action": "retry",
+        "queueName": "email",
+        "jobId": "12345",
+        "performedBy": "admin123",
+        "timestamp": "2025-05-06T10:05:00Z",
+        "details": { "reason": "Manual retry due to timeout" }
+      },
+      {
+        "action": "pause",
+        "queueName": "testQueue",
+        "jobId": null,
+        "performedBy": "admin123",
+        "timestamp": "2025-05-06T10:06:00Z",
+        "details": { "reason": "Scheduled maintenance" }
+      }
+    ]
+  }
+}

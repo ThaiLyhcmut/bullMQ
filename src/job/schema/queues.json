@@ -1,0 +1,25 @@
+{
+  "queues": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Tên queue (duy nhất)" },
+        "waitingJobs": { "type": "number", "default": 0, "description": "Số job đang chờ" },
+        "activeJobs": { "type": "number", "default": 0, "description": "Số job đang xử lý" },
+        "completedJobs": { "type": "number", "default": 0, "description": "Số job đã hoàn thành" },
+        "failedJobs": { "type": "number", "default": 0, "description": "Số job thất bại" },
+        "delayedJobs": { "type": "number", "default": 0, "description": "Số job bị trì hoãn" },
+        "pausedJobs": { "type": "number", "default": 0, "description": "Số job bị tạm dừng" },
+        "isPaused": { "type": "boolean", "default": false, "description": "Queue có bị tạm dừng không" },
+        "lastProcessed": { "type": "string", "format": "date-time", "description": "Thời gian xử lý gần nhất" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo queue" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật queue" }
+      },
+      "required": ["name"],
+      "indexes": [
+        { "key": { "name": 1 }, "unique": true }
+      ]
+    }
+  }
+}

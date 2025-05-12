@@ -1,0 +1,76 @@
+[
+  {
+    "queueName": "email",
+    "name": "register",
+    "data": {
+      "email": "lyvinhthai321@gmail.com",
+      "username": "User One"
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  },
+  {
+    "queueName": "email",
+    "name": "resetpassword",
+    "data": {
+      "email": "thai.lydznhatlop2k4@hcmut.edu.vn",
+      "resetLink": "https://yourapp.com/reset/abc123"
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  },
+  {
+    "queueName": "email",
+    "name": "forgetpassword",
+    "data": {
+      "email": "admin@thaily.id.vn",
+      "resetLink": "https://yourapp.com/reset/xyz789"
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  },
+  {
+    "queueName": "email",
+    "name": "thanks",
+    "data": {
+      "email": "22120070@st.hcmuaf.edu.vn",
+      "username": "User Four",
+      "type": "PRIORITIZED"
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  },
+  {
+    "queueName": "email",
+    "name": "events",
+    "data": {
+      "email": "lyvinhthanh321@gmail.com",
+      "eventName": "Annual Meetup",
+      "eventDate": "2025-06-01",
+      "type": "PRIORITIZED"
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  },
+  {
+    "queueName": "email",
+    "name": "order",
+    "data": {
+      "email": "22120070@st.hcmuaf.edu.vn",
+      "orderId": "ORD123",
+      "orderDetails": {
+        "item": "Product X",
+        "price": 99.99
+      },
+      "type": "PRIORITIZED"
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  }
+]

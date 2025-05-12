@@ -1,0 +1,405 @@
+{
+  "classes": [
+    {
+      "name": "MailProcessor",
+      "extends": "WorkerHost",
+      "decorators": [
+        {
+          "name": "Processor",
+          "arguments": [
+            "email"
+          ]
+        }
+      ],
+      "imports": [
+        {
+          "modules": [
+            "Processor",
+            "WorkerHost"
+          ],
+          "from": "@nestjs/bullmq"
+        },
+        {
+          "modules": [
+            "Logger"
+          ],
+          "from": "@nestjs/common"
+        },
+        {
+          "modules": [
+            "Job"
+          ],
+          "from": "bullmq"
+        },
+        {
+          "modules": [
+            "MailService"
+          ],
+          "from": "src/mail/mail.service"
+        }
+      ],
+      "properties": [
+        {
+          "name": "logger",
+          "type": "Logger",
+          "access": "private",
+          "readonly": true,
+          "initializer": "new Logger(MailProcessor.name)"
+        }
+      ],
+      "constructor": {
+        "parameters": [
+          {
+            "name": "mailService",
+            "type": "MailService",
+            "from": "src/mail/mail.service",
+            "access": "private",
+            "readonly": true
+          }
+        ],
+        "body": [
+          {
+            "type": "super",
+            "arguments": []
+          }
+        ]
+      },
+      "methods": [
+        {
+          "name": "process",
+          "async": true,
+          "parameters": [
+            {
+              "name": "job",
+              "type": "Job"
+            }
+          ],
+          "returnType": "Promise<any>",
+          "body": [
+            {
+              "type": "log",
+              "target": "logger",
+              "message": "Đang xử lý công việc email ${job.id} (${job.name})"
+            },
+            {
+              "type": "try-catch",
+              "try": {
+                "type": "switch",
+                "expression": "job.name",
+                "cases": [
+                  {
+                    "value": "register",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendRegisterEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "resetpassword",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendResetPasswordEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "forgetpassword",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendForgetPasswordEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "thanks",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendThanksEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "events",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendEventsEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "notification",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendNotificationEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "order",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.mailService.sendOrderEmail(job.data)"
+                      }
+                    ]
+                  },
+                  {
+                    "default": true,
+                    "body": [
+                      {
+                        "type": "log",
+                        "target": "logger",
+                        "level": "warn",
+                        "message": "Tên công việc email không xác định: ${job.name}"
+                      },
+                      {
+                        "type": "throw",
+                        "expression": "new Error(`Không có trình xử lý cho công việc email ${job.name}`)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "catch": {
+                "parameter": "error",
+                "body": [
+                  {
+                    "type": "log",
+                    "target": "logger",
+                    "level": "error",
+                    "message": "Lỗi khi xử lý công việc email ${job.id} (${job.name}): ${error.message}"
+                  },
+                  {
+                    "type": "throw",
+                    "expression": "error"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },{
+      "name": "PostProcessor",
+      "extends": "WorkerHost",
+      "decorators": [
+        {
+          "name": "Injectable",
+          "arguments": []
+        },
+        {
+          "name": "Processor",
+          "arguments": [
+            "posts"
+          ]
+        }
+      ],
+      "imports": [
+        {
+          "modules": [
+            "Processor",
+            "WorkerHost"
+          ],
+          "from": "@nestjs/bullmq"
+        },
+        {
+          "modules": [
+            "Injectable",
+            "Logger"
+          ],
+          "from": "@nestjs/common"
+        },
+        {
+          "modules": [
+            "Job"
+          ],
+          "from": "bullmq"
+        },
+        {
+          "modules": [
+            "PostService"
+          ],
+          "from": "src/post/post.service"
+        }
+      ],
+      "properties": [
+        {
+          "name": "logger",
+          "type": "Logger",
+          "access": "private",
+          "readonly": true,
+          "initializer": "new Logger(PostProcessor.name)"
+        }
+      ],
+      "constructor": {
+        "parameters": [
+          {
+            "name": "postService",
+            "type": "PostService",
+            "from": "src/post/post.service",
+            "access": "private",
+            "readonly": true
+          }
+        ],
+        "body": [
+          {
+            "type": "super",
+            "arguments": []
+          }
+        ]
+      },
+      "methods": [
+        {
+          "name": "process",
+          "async": true,
+          "parameters": [
+            {
+              "name": "job",
+              "type": "Job"
+            },
+            {
+              "name": "token",
+              "type": "string",
+              "optional": true
+            }
+          ],
+          "returnType": "Promise<any>",
+          "body": [
+            {
+              "type": "log",
+              "target": "logger",
+              "message": "Delaying job ${job.id} (${job.name}) for 10 seconds"
+            },
+            {
+              "type": "try-catch",
+              "try": {
+                "type": "switch",
+                "expression": "job.name",
+                "cases": [
+                  {
+                    "value": "latestJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processLatestJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "activeJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processActiveJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "waitingJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processWaitingJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "parentJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processParentJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "priorityJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processPriorityJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "completedJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processCompletedJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "failedJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processFailedJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "delayedJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processDelayedJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "value": "pausedQueueJob",
+                    "body": [
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processPausedQueueJob(job)"
+                      }
+                    ]
+                  },
+                  {
+                    "default": true,
+                    "body": [
+                      {
+                        "type": "log",
+                        "target": "logger",
+                        "level": "warn",
+                        "message": "Unknown job name: ${job.name}"
+                      },
+                      {
+                        "type": "return",
+                        "expression": "await this.postService.processChildJob(job)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "catch": {
+                "parameter": "error",
+                "body": [
+                  {
+                    "type": "log",
+                    "target": "logger",
+                    "level": "error",
+                    "message": "Error processing job ${job.id} (${job.name}): ${error.message}"
+                  },
+                  {
+                    "type": "throw",
+                    "expression": "error"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

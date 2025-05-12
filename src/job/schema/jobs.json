@@ -1,0 +1,35 @@
+{
+  "jobs": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string", "description": "ID của job từ BullMQ" },
+        "queueName": { "type": "string", "description": "Tên queue chứa job" },
+        "name": { "type": "string", "description": "Tên job (ví dụ: 'process-job')" },
+        "data": { "type": "object", "description": "Dữ liệu của job" },
+        "status": { 
+          "type": "string", 
+          "enum": ["waiting", "active", "completed", "failed", "delayed", "paused"],
+          "description": "Trạng thái của job"
+        },
+        "progress": { "type": "number", "default": 0, "description": "Tiến trình xử lý (0-100)" },
+        "attemptsMade": { "type": "number", "default": 0, "description": "Số lần đã thử xử lý" },
+        "maxAttempts": { "type": "number", "default": 3, "description": "Số lần thử tối đa" },
+        "startedAt": { "type": "string", "format": "date-time", "description": "Thời gian bắt đầu xử lý" },
+        "finishedAt": { "type": "string", "format": "date-time", "description": "Thời gian hoàn thành" },
+        "processedOn": { "type": "string", "format": "date-time", "description": "Thời gian bắt đầu xử lý (theo worker)" },
+        "error": { "type": "string", "description": "Thông tin lỗi nếu job thất bại" },
+        "stacktrace": { "type": "array", "items": { "type": "string" }, "description": "Stacktrace nếu job thất bại" },
+        "result": { "type": "object", "description": "Kết quả trả về sau khi xử lý" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo job" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật job" }
+      },
+      "required": ["jobId", "queueName", "name", "data", "status"],
+      "indexes": [
+        { "key": { "queueName": 1, "status": 1 } },
+        { "key": { "jobId": 1 } }
+      ]
+    }
+  }
+}

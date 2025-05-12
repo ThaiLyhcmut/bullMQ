@@ -1,0 +1,411 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BullMQ Configuration Schema",
+  "description": "Schema for configuring BullMQ queues, jobs, workers, and related settings in a system.",
+  "type": "object",
+  "properties": {
+    "queues": {
+      "type": "array",
+      "description": "List of queues to handle different types of tasks.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name of the queue (e.g., emailQueue, imageProcessingQueue).",
+            "minLength": 1
+          },
+          "redis": {
+            "type": "object",
+            "description": "Redis connection settings for the queue.",
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Redis host (e.g., localhost or Redis cloud URL).",
+                "default": "localhost"
+              },
+              "port": {
+                "type": "integer",
+                "description": "Redis port.",
+                "default": 6379
+              },
+              "password": {
+                "type": ["string", "null"],
+                "description": "Redis password (optional for secured Redis).",
+                "default": null
+              },
+              "db": {
+                "type": "integer",
+                "description": "Redis database index.",
+                "default": 0
+              },
+              "tls": {
+                "type": ["object", "null"],
+                "description": "TLS configuration for secure Redis connection (optional).",
+                "properties": {
+                  "ca": {
+                    "type": "string",
+                    "description": "CA certificate for TLS."
+                  },
+                  "cert": {
+                    "type": "string",
+                    "description": "Client certificate for TLS."
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "Client key for TLS."
+                  }
+                },
+                "default": null
+              }
+            },
+            "required": ["host", "port"]
+          },
+          "options": {
+            "type": "object",
+            "description": "Queue-specific options.",
+            "properties": {
+              "defaultJobOptions": {
+                "type": "object",
+                "description": "Default options applied to all jobs in this queue.",
+                "properties": {
+                  "attempts": {
+                    "type": "integer",
+                    "description": "Number of retry attempts for failed jobs.",
+                    "minimum": 0,
+                    "default": 3
+                  },
+                  "backoff": {
+                    "type": "object",
+                    "description": "Backoff strategy for retries.",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["fixed", "exponential"],
+                        "description": "Backoff type.",
+                        "default": "exponential"
+                      },
+                      "delay": {
+                        "type": "integer",
+                        "description": "Initial delay in milliseconds.",
+                        "minimum": 0,
+                        "default": 1000
+                      }
+                    },
+                    "required": ["type", "delay"]
+                  },
+                  "removeOnComplete": {
+                    "type": "boolean",
+                    "description": "Remove job from queue after completion.",
+                    "default": true
+                  },
+                  "removeOnFail": {
+                    "type": "boolean",
+                    "description": "Remove job from queue after failure.",
+                    "default": false
+                  }
+                }
+              },
+              "limiter": {
+                "type": ["object", "null"],
+                "description": "Rate limiting configuration for the queue.",
+                "properties": {
+                  "max": {
+                    "type": "integer",
+                    "description": "Maximum number of jobs processed in duration.",
+                    "minimum": 1
+                  },
+                  "duration": {
+                    "type": "integer",
+                    "description": "Time window for rate limiting in milliseconds.",
+                    "minimum": 1
+                  }
+                },
+                "default": null
+              },
+              "prefix": {
+                "type": "string",
+                "description": "Prefix for Redis keys (e.g., {bull}:emailQueue).",
+                "default": "{bull}"
+              }
+            }
+          }
+        },
+        "required": ["name", "redis"]
+      }
+    },
+    "jobs": {
+      "type": "array",
+      "description": "Definitions of job types and their payloads.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name of the job type (e.g., send-email, resize-image).",
+            "minLength": 1
+          },
+          "queue": {
+            "type": "string",
+            "description": "Name of the queue this job belongs to.",
+            "minLength": 1
+          },
+          "payload": {
+            "type": "object",
+            "description": "Schema for the job's data payload.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Data type of the payload (e.g., object, array).",
+                "enum": ["object", "array", "string", "number", "boolean"]
+              },
+              "properties": {
+                "type": "object",
+                "description": "Key-value pairs defining the payload structure.",
+                "additionalProperties": true
+              },
+              "required": {
+                "type": "array",
+                "description": "List of required fields in the payload.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["type"]
+          },
+          "options": {
+            "type": "object",
+            "description": "Job-specific options.",
+            "properties": {
+              "priority": {
+                "type": "integer",
+                "description": "Priority of the job (lower number = higher priority).",
+                "minimum": 1,
+                "default": 1
+              },
+              "delay": {
+                "type": ["integer", "null"],
+                "description": "Delay in milliseconds before processing the job.",
+                "minimum": 0,
+                "default": null
+              },
+              "attempts": {
+                "type": "integer",
+                "description": "Number of retry attempts for failed jobs.",
+                "minimum": 0
+              },
+              "backoff": {
+                "type": ["object", "null"],
+                "description": "Backoff strategy for retries.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["fixed", "exponential"]
+                  },
+                  "delay": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "default": null
+              }
+            }
+          }
+        },
+        "required": ["name", "queue", "payload"]
+      }
+    },
+    "workers": {
+      "type": "array",
+      "description": "Configuration for workers processing jobs.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "queue": {
+            "type": "string",
+            "description": "Name of the queue this worker processes.",
+            "minLength": 1
+          },
+          "concurrency": {
+            "type": "integer",
+            "description": "Number of jobs processed concurrently.",
+            "minimum": 1,
+            "default": 1
+          },
+          "errorHandling": {
+            "type": "object",
+            "description": "Error handling configuration.",
+            "properties": {
+              "logErrors": {
+                "type": "boolean",
+                "description": "Log errors to a logging system.",
+                "default": true
+              },
+              "notifyOnFailure": {
+                "type": "array",
+                "description": "Notification channels for job failures.",
+                "items": {
+                  "type": "string",
+                  "enum": ["email", "slack", "webhook"]
+                },
+                "default": []
+              },
+              "maxRetriesBeforeNotification": {
+                "type": "integer",
+                "description": "Number of retries before sending notification.",
+                "minimum": 0,
+                "default": 3
+              }
+            }
+          },
+          "progressTracking": {
+            "type": "boolean",
+            "description": "Enable progress tracking for jobs.",
+            "default": false
+          }
+        },
+        "required": ["queue", "concurrency"]
+      }
+    },
+    "events": {
+      "type": "object",
+      "description": "Event listeners for job states.",
+      "properties": {
+        "completed": {
+          "type": "object",
+          "description": "Actions to take when a job completes.",
+          "properties": {
+            "log": {
+              "type": "boolean",
+              "description": "Log completion event.",
+              "default": true
+            },
+            "storeResult": {
+              "type": "boolean",
+              "description": "Store job result in database.",
+              "default": false
+            },
+            "notify": {
+              "type": "array",
+              "description": "Notification channels for completion.",
+              "items": {
+                "type": "string",
+                "enum": ["email", "slack", "webhook"]
+              },
+              "default": []
+            }
+          }
+        },
+        "failed": {
+          "type": "object",
+          "description": "Actions to take when a job fails.",
+          "properties": {
+            "log": {
+              "type": "boolean",
+              "description": "Log failure event.",
+              "default": true
+            },
+            "storeError": {
+              "type": "boolean",
+              "description": "Store error details in database.",
+              "default": true
+            },
+            "notify": {
+              "type": "array",
+              "description": "Notification channels for failure.",
+              "items": {
+                "type": "string",
+                "enum": ["email", "slack", "webhook"]
+              },
+              "default": ["slack"]
+            }
+          }
+        },
+        "progress": {
+          "type": "object",
+          "description": "Actions to take when a job updates progress.",
+          "properties": {
+            "storeProgress": {
+              "type": "boolean",
+              "description": "Store progress in database or send via WebSocket.",
+              "default": false
+            }
+          }
+        },
+        "stalled": {
+          "type": "object",
+          "description": "Actions to take when a job stalls.",
+          "properties": {
+            "notify": {
+              "type": "array",
+              "description": "Notification channels for stalled jobs.",
+              "items": {
+                "type": "string",
+                "enum": ["email", "slack", "webhook"]
+              },
+              "default": ["slack"]
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "description": "Monitoring and debugging configuration.",
+      "properties": {
+        "dashboard": {
+          "type": "object",
+          "description": "Configuration for queue dashboard (e.g., Bull Board).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable dashboard.",
+              "default": false
+            },
+            "path": {
+              "type": "string",
+              "description": "URL path for dashboard.",
+              "default": "/bull-board"
+            }
+          }
+        },
+        "logging": {
+          "type": "object",
+          "description": "Logging configuration.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable logging.",
+              "default": true
+            },
+            "system": {
+              "type": "string",
+              "description": "Logging system to use.",
+              "enum": ["winston", "elk", "sentry", "custom"],
+              "default": "winston"
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Metrics collection configuration.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable metrics collection.",
+              "default": false
+            },
+            "system": {
+              "type": "string",
+              "description": "Metrics system to use.",
+              "enum": ["prometheus", "grafana", "custom"],
+              "default": "prometheus"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["queues", "jobs", "workers"]
+}
