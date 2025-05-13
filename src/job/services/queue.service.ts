@@ -124,4 +124,18 @@ export class QueueAdapter {
     await this.flowProducer.close();
     this.logger.log('Đã đóng FlowProducer trong QueueAdapter');
   }
+
+  // Chạy các task delayed
+  async runDelayedTasks(queue: Queue, job: Job<any>) {
+    try {
+      await queue.add(job.name, job.data, {
+        delay: job.opts.delay,
+        removeOnComplete: false,
+        removeOnFail: false,
+      });
+      this.logger.log(`Đã thêm job ${job.id} vào queue ${queue.name} với delay ${job.opts.delay}`);
+    } catch (error) {
+      this.logger.error(`Lỗi khi thêm job ${job.id} vào queue ${queue.name}: ${error.message}`);
+    }
+  }
 }

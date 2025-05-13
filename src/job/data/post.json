@@ -78,10 +78,10 @@
               "price": 99.99
             },
             "type": "DELAYED",
-            "delay": 300000
+            "delay": 3000
           },
           "options": {
-            "delay": 300000,
+            "delay": 3000,
             "removeOnComplete": false
           }
         }
@@ -111,6 +111,19 @@
     },
     "options": {
       "delay": 30000
+    }
+  },
+  {
+    "queueName": "email",
+    "name": "MailService.sendWelcomeEmail",
+    "data": {
+      "email": "newuser@example.com",
+      "subject": "Welcome to Our Service",
+      "content": "Thank you for signing up for our service. We're excited to have you on board!"
+    },
+    "options": {
+      "removeOnComplete": true,
+      "priority": 1
     }
   }
 ]

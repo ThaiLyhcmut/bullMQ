@@ -258,4 +258,16 @@ export class JobsService {
     this.queues.clear();
     this.logger.log('Đã dọn dẹp JobsService');
   }
+
+  async getDelayedJobs(queueName: string) {
+    const queue = await this.getQueue(queueName);
+    const delayedJobs = await queue.getDelayed();
+    return delayedJobs.map((job) => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      opts: job.opts,
+      delay: job.delay,
+    }));
+  }
 }

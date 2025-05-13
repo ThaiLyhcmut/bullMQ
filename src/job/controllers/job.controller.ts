@@ -34,4 +34,21 @@ export class JobsController {
       jobs: await queueInstance.getJobCounts()
     };
   }
+
+  @Post('add-delayed-job')
+  async addDelayedJob() {
+    await this.jobsService.addJob(
+      'posts',
+      'PostService.DelayedJob',
+      { type: 'DELAYED', delay: 15000 },
+      { delay: 15000 },
+    );
+    return { message: 'Delayed job added to posts queue' };
+  }
+
+  @Get('delayed-jobs')
+  async getDelayedJobs() {
+    const delayedJobs = await this.jobsService.getDelayedJobs('posts');
+    return delayedJobs;
+  }
 }

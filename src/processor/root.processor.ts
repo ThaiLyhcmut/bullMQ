@@ -14,6 +14,7 @@ export class GenericProcessor extends WorkerHost {
   }
 
   async process(job: Job): Promise<any> {
+    console.log(`------------------------------- ${this.queueName}`)
     this.logger.log(`Xử lý job từ queue ${this.queueName}: ${job.id} (${job.name})`);
     try {
       const [serviceName, methodName] = job.name.split('.');
@@ -34,10 +35,10 @@ export class GenericProcessor extends WorkerHost {
   }
 }
 
-@Processor('mail')
+@Processor('email')
 export class MailProcessor extends GenericProcessor {
   constructor(moduleRef: ModuleRef) {
-    super(moduleRef, 'mail');
+    super(moduleRef, 'email');
   }
 }
 
