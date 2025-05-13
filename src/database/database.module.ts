@@ -8,7 +8,7 @@ import { DatabaseService } from 'src/job/services/database.service';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI', 'mongodb://thaily:Th%40i2004@localhost:27017/db?authSource=admin'),
+        uri: configService.get<string>('MONGODB_URI', 'mongodb://localhost:27017'),
       }),
       inject: [ConfigService],
     }),

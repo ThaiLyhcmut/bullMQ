@@ -68,7 +68,7 @@
           }
         },
         {
-          "name": "MailService.Order",
+          "name": "MailService.sendOrderEmail",
           "queueName": "email",
           "data": {
             "email": "thai.lydznhatlop2k4@hcmut.edu.vn",

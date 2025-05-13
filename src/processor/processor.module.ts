@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-import {MailService} from 'src/mail/mail.service'; import {PostService} from 'src/post/post.service'
+import { MailService } from 'src/mail/mail.service'; import {PostService} from 'src/post/post.service'
 import { JobsModule } from 'src/job/job.module';
-import { AppProcessor } from './root.processor';
+import { PostProcessor } from './root.processor';
+import { MailProcessor } from './root.processor';
 
 
 @Module({
@@ -32,7 +33,11 @@ import { AppProcessor } from './root.processor';
     ,
     JobsModule
   ],
-  providers: [AppProcessor, {provide: 'MailService', useClass: MailService}, {provide: 'PostService', useClass: PostService}],
+  providers: [
+    {provide: 'PostProcessor', useClass: PostProcessor,},
+    {provide: 'MailProcessor', useClass: MailProcessor,},
+    {provide: 'MailService', useClass: MailService}, 
+    {provide: 'PostService', useClass: PostService}],
   exports: [ BullModule],
 })
 export class ProcessorModule {}
