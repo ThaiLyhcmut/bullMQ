@@ -1,9 +1,10 @@
+// src/jobs/processors/app.processor.ts
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, Scope } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { ModuleRef } from '@nestjs/core';
 
-@Processor('*') // hoặc cụ thể 1 queue nếu bạn muốn
+@Processor({name:  "*",scope: Scope.REQUEST}) // Wildcard to match all queues
 export class AppProcessor extends WorkerHost {
   private readonly logger = new Logger(AppProcessor.name);
 
@@ -12,27 +13,37 @@ export class AppProcessor extends WorkerHost {
   }
 
   async process(job: Job): Promise<any> {
-    this.logger.log(`Định tuyến job ${job.id} (${job.name})`);
+    this.logger.log(`Processing job ${job.id} (${job.name}) from queue ${job.queueName}`);
 
     try {
+      // Expect job.name to be in the format "serviceName.methodName"
       const [serviceName, methodName] = job.name.split('.');
       if (!serviceName || !methodName) {
-        throw new Error(`Tên job không hợp lệ: ${job.name}`);
+        throw new Error(`Invalid job name format: ${job.name}. Expected format: serviceName.methodName`);
       }
 
-      console.log(serviceName, methodName)
-      // Tìm service trong DI Container
-      const service = this.moduleRef.get(serviceName, { strict: false });
-      console.log(service)
+      // Resolve the service from the DI container
+      let service: any;
+      try {
+        service = this.moduleRef.get(serviceName, { strict: false });
+      } catch (error) {
+        throw new Error(`Service ${serviceName} not found in DI container`);
+      }
+
+      // Verify the method exists on the service
       if (!service || typeof service[methodName] !== 'function') {
-        throw new Error(`Không tìm thấy ${methodName} trong ${serviceName}`);
+        throw new Error(`Method ${methodName} not found in service ${serviceName}`);
       }
 
-      // Gọi phương thức xử lý
-      return await service[methodName](job);
+      // Execute the method with the job data
+      this.logger.debug(`Executing ${serviceName}.${methodName} with data: ${JSON.stringify(job.data)}`);
+      const result = await service[methodName](job);
+      this.logger.log(`Job ${job.id} (${job.name}) completed successfully`);
+
+      return result;
     } catch (error) {
-      this.logger.error(`Lỗi xử lý job ${job.name}: ${error.message}`);
-      throw error;
+      this.logger.error(`Error processing job ${job.id} (${job.name}) from queue ${job.queueName}: ${error.message}`, error.stack);
+      throw error; // Re-throw to let BullMQ handle retries or move to failed queue
     }
   }
 }

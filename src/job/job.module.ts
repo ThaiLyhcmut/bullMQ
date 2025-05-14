@@ -5,7 +5,6 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { JobsService } from './services/job.service';
 import { JobsController } from './controllers/job.controller';
-import { PostProcessor } from './processor/post.processor';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseService } from './services/database.service';

@@ -3,40 +3,8 @@
     "queueName": "posts",
     "name": "PostService.LatestJob",
     "data": {
-      "type": "LATEST"
-    },
-    "options": {
-      "removeOnComplete": false
-    }
-  },
-  {
-    "queueName": "posts",
-    "name": "PostService.LatestJob",
-    "data": {
-      "type": "LATEST"
-    },
-    "options": {
-      "removeOnComplete": false
-    }
-  },
-  {
-    "queueName": "posts",
-    "name": "PostService.PriorityJob",
-    "data": {
-      "type": "PRIORITIZED"
-    },
-    "options": {
-      "priority": 1
-    }
-  },
-  {
-    "queueName": "posts",
-    "name": "PostService.PriorityJob",
-    "data": {
-      "type": "PRIORITIZED"
-    },
-    "options": {
-      "priority": 2
+      "type": "LASTED",
+      "massage": "CREATE POST SUCCESS"
     }
   },
   {
@@ -44,16 +12,15 @@
     "name": "PostService.ParentJob",
     "data": {
       "type": "WAITING_CHILDREN",
+      "enableChainResults": true,
       "childJobs": [
         {
           "name": "PostService.DelayedJob",
           "queueName": "posts",
           "data": {
-            "type": "DELAYED",
-            "delay": 15000
+            "type": "LASTEST"          
           },
           "options": {
-            "delay": 15000,
             "removeOnComplete": false
           }
         },
@@ -68,7 +35,7 @@
           }
         },
         {
-          "name": "MailService.Order",
+          "name": "MailService.sendOrderEmail",
           "queueName": "email",
           "data": {
             "email": "thai.lydznhatlop2k4@hcmut.edu.vn",
@@ -78,10 +45,10 @@
               "price": 99.99
             },
             "type": "DELAYED",
-            "delay": 300000
+            "delay": 3000
           },
           "options": {
-            "delay": 300000,
+            "delay": 3000,
             "removeOnComplete": false
           }
         }
@@ -89,28 +56,6 @@
     },
     "options": {
       "removeOnComplete": false
-    }
-  },
-  {
-    "queueName": "posts",
-    "name": "PostService.DelayedJob",
-    "data": {
-      "type": "DELAYED",
-      "delay": 15000
-    },
-    "options": {
-      "delay": 15000
-    }
-  },
-  {
-    "queueName": "posts",
-    "name": "PostService.DelayedJob",
-    "data": {
-      "type": "DELAYED",
-      "delay": 30000
-    },
-    "options": {
-      "delay": 30000
     }
   }
 ]

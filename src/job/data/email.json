@@ -13,6 +13,7 @@
   {
     "queueName": "email",
     "name": "resetpassword",
+    "enableChainResults": true,
     "data": {
       "email": "thai.lydznhatlop2k4@hcmut.edu.vn",
       "resetLink": "https://yourapp.com/reset/abc123"

@@ -141,8 +141,12 @@ export class JobsService {
       }
     }
     let job: Job;
-    if (data.type === 'WAITING_CHILDREN' && data.childJobs.length > 0) {
+    if (data.type === 'WAITING_CHILDREN' && data.childJobs?.length > 0) {
       job = await queue.add(name, data, options);
+
+      // Thêm tham số enableChainResults nếu cần truyền kết quả giữa các child jobs
+      const enableChainResults = data.enableChainResults === true;
+
       const childJobIds = await this.queueAdapter.createChildJobs(
         job,
         queue,
@@ -150,10 +154,13 @@ export class JobsService {
         (index) => ({
           parentId: job.id,
           index,
-          options: data.childJobs[index].options || {}, // Đảm bảo options được truyền
+          options: data.childJobs[index].options || {},
         }),
+        enableChainResults // Truyền tham số mới
+        
       );
-      this.logger.log(`Đã thiết lập job ${job.id} với ${childJobIds.length} child jobs`);
+
+      this.logger.log(`Đã thiết lập job ${job.id} với ${childJobIds.length} child jobs ${enableChainResults ? 'có' : 'không'} truyền kết quả`);
     } else {
       job = await queue.add(name, data, options);
       this.logger.log(`Đã thêm job ${name} vào queue ${queueName} - ID: ${job.id} - Type: ${data.type}`);

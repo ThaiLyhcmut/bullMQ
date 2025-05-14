@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Job, Queue, FlowProducer, ConnectionOptions } from 'bullmq';
+import { Job, Queue, FlowProducer, ConnectionOptions, JobsOptions } from 'bullmq';
 
 /**
  * QueueAdapter - Service để quản lý parent-child jobs trong BullMQ
  */
+
 @Injectable()
 export class QueueAdapter {
   private readonly logger = new Logger(QueueAdapter.name);
@@ -48,35 +49,74 @@ export class QueueAdapter {
 
   /**
    * Tạo child jobs và thiết lập dependencies bằng FlowProducer
+   * Bao gồm chức năng truyền kết quả giữa các job
    */
   async createChildJobs(
     parentJob: Job<any>,
     queue: Queue,
     dataChild: any[],
     childJobDataGenerator = (index: number) => ({ index }),
+    enableChainResults = false // Thêm tham số để bật chức năng truyền kết quả
   ): Promise<string[]> {
     try {
       const childJobIds: string[] = [];
+      let previousJobId: string | null = null;
 
       // Hàm đệ quy để xây dựng cấu trúc children
-      const buildChildren = (childData: any[], parentId: string | undefined, queueName: string) => {
+      const buildChildren = (
+        childData: any[], 
+        parentId: string | undefined, 
+        queueName: string,
+        prevJobId: string | null = null
+      ) => {
+        let queueNameParant = ""
         return childData.map((data, index) => {
-          const childData = {
+          // Tạo ID duy nhất cho job
+          const uniqueJobId = `${parentId || 'root'}_child_${index}_${Date.now()}`;
+          
+          // Tạo dữ liệu cho child job
+          const childDataWithParent = {
             parentId,
             type: data.type,
             ...data.data,
             ...childJobDataGenerator(index),
           };
-          const childNode:any = {
+          
+          // Nếu bật chức năng truyền kết quả và có job trước đó
+          if (enableChainResults && prevJobId && index > 0) {
+            childDataWithParent.previousJobId = prevJobId;
+          }
+          
+          const childNode: any = {
             name: data.name,
-            queueName: data.queueName || queueName, // Sử dụng queueName của parent nếu không có
-            data: childData,
-            opts: data.options || {},
+            queueName: data.queueName || queueName,
+            data: childDataWithParent,
+            opts: {
+              ...data.options || {},
+              jobId: uniqueJobId,
+            },
           };
+          
+          // Nếu bật chức năng truyền kết quả và có job trước đó
+          if (enableChainResults && prevJobId && index > 0 && queueNameParant != "") {
+            childNode.opts.dependencies = [prevJobId];
+            childNode.opts.processDependenciesResults = true;
+            childNode.data.queueNameParant = queueNameParant
+          }
+          
+          // Lưu jobId hiện tại để sử dụng cho job tiếp theo
+          prevJobId = uniqueJobId;
+          queueNameParant = childNode.queueName
           // Nếu có children, gọi đệ quy để xử lý job con lồng
           if (data.children && Array.isArray(data.children)) {
-            childNode.children = buildChildren(data.children, parentId, data.queueName || queueName);
+            childNode.children = buildChildren(
+              data.children, 
+              parentId, 
+              data.queueName || queueName,
+              null // Reset trạng thái cho các child jobs
+            );
           }
+          
           return childNode;
         });
       };
@@ -87,8 +127,9 @@ export class QueueAdapter {
         queueName: queue.name,
         data: parentJob.data,
         opts: parentJob.opts,
-        children: buildChildren(dataChild, parentJob.id, queue.name),
+        children: buildChildren(dataChild, parentJob.id, queue.name, previousJobId),
       });
+      
       // Lấy ID của các child jobs (bao gồm cả grandchild jobs)
       const collectJobIds = (children: any[]) => {
         for (const childNode of children) {
@@ -116,6 +157,28 @@ export class QueueAdapter {
     } catch (error) {
       this.logger.error(`Lỗi khi tạo child jobs cho job ${parentJob.id}: ${error.message}`);
       return [];
+    }
+  }
+
+  
+  async getJobResult(queue: Queue, jobId: string): Promise<any> {
+    try {
+      const job = await queue.getJob(jobId);
+      if (!job) {
+        this.logger.warn(`Không tìm thấy job với ID: ${jobId}`);
+        return null;
+      }
+      
+      const state = await job.getState();
+      if (state !== 'completed') {
+        this.logger.warn(`Job ${jobId} chưa hoàn thành (state: ${state})`);
+        return null;
+      }
+      
+      return job.returnvalue;
+    } catch (error) {
+      this.logger.error(`Lỗi khi lấy kết quả của job ${jobId}: ${error.message}`);
+      return null;
     }
   }
 

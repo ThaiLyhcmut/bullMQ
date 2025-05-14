@@ -34,24 +34,14 @@ export class PostService {
     return { status: 'success', type: 'WAITING' };
   }
   async ParentJob(job: Job) {
-    this.logger.log(`Đang xử lý PARENT job: ${job.id}`);
-    this.logger.log(`Job này phải đợi ${job.data.childJobs} child jobs hoàn thành`);
-
-    // Job này sẽ tự động đợi các child jobs hoàn thành trước khi được xử lý
-    // nhờ vào việc gọi job.moveToWaitingChildren() trong JobsService
-
-    this.logger.log(`Tất cả child jobs đã hoàn thành, đang xử lý parent job: ${job.id}`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    this.logger.log(`Đã hoàn thành PARENT job: ${job.id}`);
-    return { status: 'success', type: 'PARENT' };
-  }
-  async ChildJob(job: Job) {
-    this.logger.log(`Đang xử lý CHILD job: ${job.id} - Index: ${job.data.index}`);
-    // Xử lý child jobs với thời gian ngẫu nhiên
-    const processingTime = 3000 + Math.random() * 5000;
-    await new Promise(resolve => setTimeout(resolve, processingTime));
-    this.logger.log(`Đã hoàn thành CHILD job: ${job.id}`);
-    return { status: 'success', type: 'CHILD' };
+    
+    if (job.data.type === 'WAITING_CHILDREN') {
+      this.logger.log(`Đang xử lý PARENT job: ${job.id}`);
+      this.logger.log(`Job này phải đợi ${job.data.childJobs} child jobs hoàn thành`);
+      return { status: 'watting', type: 'WAITING_CHILDREN' };
+    }
+    this.logger.log(`Hoàn thành PARENT job: ${job.id}`);
+    return { status: 'success', type: 'WAITING_CHILDREN' };
   }
   async PriorityJob(job: Job) {
     this.logger.log(`Đang xử lý PRIORITIZED job: ${job.id} - Priority: ${job.opts.priority}`);
