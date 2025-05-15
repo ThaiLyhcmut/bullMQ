@@ -8,7 +8,7 @@ import { AppService } from './app.service';
 import { JobsModule } from './job/job.module';
 import { DatabaseModule } from './database/database.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ProcessorModule } from './processor/processor.module';
+import { RegisterServiceModule } from './processor/register.module'; 
 import { RedisModule } from './redis/redis.module';
 
 @Module({
@@ -23,7 +23,7 @@ import { RedisModule } from './redis/redis.module';
       route: '/admin/queues',
       adapter: ExpressAdapter,
     }),
-    ProcessorModule,
+    RegisterServiceModule,
     JobsModule,
     DatabaseModule,
     RedisModule,

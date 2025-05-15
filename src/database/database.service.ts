@@ -1,112 +1,152 @@
-
-import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+// src/job/services/database.service.ts
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
+import { Db, Collection } from 'mongodb';
+import { Job } from 'bullmq';
 
 @Injectable()
-export class QueryService {
-  private readonly logger = new Logger(QueryService.name);
+export class DatabaseService implements OnModuleInit {
+  private readonly logger = new Logger(DatabaseService.name);
+  private db: Db;
+  private collections: Map<string, Collection> = new Map();
 
-  constructor(@InjectConnection() private readonly connection: Connection) {}
+  constructor(@InjectConnection() private readonly connection: Connection) {
+    // Lấy native connection từ mongoose
+    const client = this.connection.getClient();
+    this.db = client.db();
+    console.log("CREATE DATABASE")
+  }
+
+  async onModuleInit() {
+    // Danh sách các queue cần khởi tạo collection
+    const queueNames = ['email', 'posts'];
+    
+    for (const name of queueNames) {
+      await this.getOrCreateCollection(name);
+    }
+    
+    this.logger.log('Đã khởi tạo tất cả collections cho DatabaseService');
+  }
+
+  private async getOrCreateCollection(name: string): Promise<Collection> {
+    if (this.collections.has(name)) {
+      return this.collections.get(name) as any;
+    }
+
+    try {
+      // Kiểm tra collection đã tồn tại chưa
+      const collections = await this.db.listCollections({ name }).toArray();
+      
+      if (collections.length === 0) {
+        await this.db.createCollection(name);
+        this.logger.log(`Đã tạo collection mới: ${name}`);
+      }
+      
+      const collection = this.db.collection(name);
+      
+      // Tạo index nếu chưa có
+      await collection.createIndex({ bullMQjobID: 1 }, { 
+        unique: true,
+        background: true
+      });
+      
+      this.collections.set(name, collection);
+      this.logger.log(`Đã khởi tạo collection: ${name}`);
+      return collection;
+    } catch (error) {
+      this.logger.error(`Lỗi khi khởi tạo collection ${name}: ${error.message}`);
+      throw error;
+    }
+  }
 
   /**
    * Execute a raw MongoDB query on a specified collection
-   * @param collectionName The name of the collection to query
-   * @param query The MongoDB query object (e.g., { "age": { "$gt": 18 } })
-   * @param options Optional query options (e.g., sort, limit, skip)
-   * @returns Query results
    */
   async executeQuery(
     collectionName: string,
-    query: Record<string, any>,
-    options: { sort?: Record<string, any>; limit?: number; skip?: number } = {},
-  ): Promise<any[]> {
+    query: Record<string, any> | Record<string, any>[],
+    operation: 'find' | 'insert' | 'update' | 'delete' | 'lookup' = 'find',
+  ): Promise<any> {
     try {
-      // Validate collection name to prevent injection
+      
+      // Validate collection name
       if (!/^[a-zA-Z0-9_]+$/.test(collectionName)) {
         this.logger.warn(`Invalid collection name: ${collectionName}`);
-        throw new BadRequestException('Invalid collection name');
+        throw new Error('Invalid collection name');
       }
-
-      // Restrict to read-only operations (find) to prevent destructive actions
-      // You can extend this to allow updates/deletes with proper authorization
-      if (this.isWriteOperation(query)) {
-        this.logger.warn(`Write operations are not allowed: ${JSON.stringify(query)}`);
-        throw new ForbiddenException('Write operations are not permitted');
-      }
-
+      
+      // Lấy hoặc tạo collection nếu chưa có
+      const collection = await this.getOrCreateCollection(collectionName);
       this.logger.log(
-        `Executing query on collection ${collectionName}: ${JSON.stringify(query)} with options ${JSON.stringify(options)}`,
+        `Executing ${operation} query on collection ${collectionName}: ${JSON.stringify(query)}`,
       );
-
-      // Access the collection
-      const collection = this.connection.collection(collectionName);
-
-      // Build the query
-      let queryBuilder = collection.find(query);
-
-      // Apply options (sort, limit, skip)
-      if (options.sort) {
-        queryBuilder = queryBuilder.sort(options.sort);
+      
+      let result: any;
+      
+      // Execute the query based on operation type
+      switch (operation) {
+        case 'find':
+          result = await collection.find(query as Record<string, any>).toArray();
+          this.logger.log(`Find query returned ${result.length} results`);
+          break;
+        case 'insert':
+          result = await collection.insertMany(Array.isArray(query) ? query : [query]);
+          this.logger.log(`Inserted ${result.insertedCount} document(s)`);
+          break;
+        case 'update':
+          result = await collection.updateMany(
+            (query as Record<string, any>).filter || {},
+            (query as Record<string, any>).update || query,
+          );
+          this.logger.log(`Updated ${result.modifiedCount} document(s)`);
+          break;
+        case 'delete':
+          result = await collection.deleteMany(query as Record<string, any>);
+          this.logger.log(`Deleted ${result.deletedCount} document(s)`);
+          break;
+        case 'lookup':
+          // Handle lookup as an aggregation pipeline
+          const pipeline = Array.isArray(query) ? query : [query];
+          result = await collection.aggregate(pipeline).toArray();
+          this.logger.log(`Lookup query returned ${result.length} results`);
+          break;
+        default:
+          throw new Error(`Unsupported operation: ${operation}`);
       }
-      if (options.limit) {
-        queryBuilder = queryBuilder.limit(options.limit);
-      }
-      if (options.skip) {
-        queryBuilder = queryBuilder.skip(options.skip);
-      }
-
-      // Execute the query and convert to array
-      const results = await queryBuilder.toArray();
-
-      this.logger.log(`Query returned ${results.length} results`);
-      return results;
+      
+      return result;
     } catch (error) {
       this.logger.error(`Query execution failed: ${error.message}`);
-      throw new BadRequestException(`Query execution failed: ${error.message}`);
+      throw error;
     }
   }
 
   /**
    * Execute a raw MongoDB aggregation pipeline
-   * @param collectionName The name of the collection
-   * @param pipeline The aggregation pipeline (e.g., [{ $match: { age: { $gt: 18 } } }])
-   * @returns Aggregation results
    */
   async executeAggregation(collectionName: string, pipeline: Record<string, any>[]): Promise<any[]> {
     try {
       // Validate collection name
       if (!/^[a-zA-Z0-9_]+$/.test(collectionName)) {
         this.logger.warn(`Invalid collection name: ${collectionName}`);
-        throw new BadRequestException('Invalid collection name');
+        throw new Error('Invalid collection name');
       }
-
+      
+      // Lấy hoặc tạo collection
+      const collection = await this.getOrCreateCollection(collectionName);
+      
       this.logger.log(
         `Executing aggregation on collection ${collectionName}: ${JSON.stringify(pipeline)}`,
       );
-
-      // Access the collection
-      const collection = this.connection.collection(collectionName);
-
+      
       // Execute the aggregation pipeline
       const results = await collection.aggregate(pipeline).toArray();
-
       this.logger.log(`Aggregation returned ${results.length} results`);
       return results;
     } catch (error) {
       this.logger.error(`Aggregation execution failed: ${error.message}`);
-      throw new BadRequestException(`Aggregation execution failed: ${error.message}`);
+      throw error;
     }
-  }
-
-  /**
-   * Check if the query contains write operations (e.g., update, delete)
-   * @param query The query object
-   * @returns True if the query is a write operation
-   */
-  private isWriteOperation(query: Record<string, any>): boolean {
-    // Add more checks as needed for specific write operations
-    const writeOperators = ['$set', '$unset', '$inc', '$push', '$pull'];
-    return Object.keys(query).some((key) => writeOperators.includes(key));
   }
 }

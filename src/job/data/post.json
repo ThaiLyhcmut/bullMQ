@@ -18,6 +18,7 @@
           "name": "PostService.DelayedJob",
           "queueName": "posts",
           "data": {
+            "db_type": "insert",
             "type": "LASTEST"          
           },
           "options": {
