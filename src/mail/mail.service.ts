@@ -35,16 +35,17 @@ export class MailService {
     `;
   }
 
-  async sendRegisterEmail(email: string, username: string): Promise<void> {
+  async sendRegisterEmail(data: any): Promise<void> {
+    const options: { email: string, username: string } = data
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
+      to: options.email,
       subject: 'Welcome to Your App! 🎉',
       html: `
         ${this.getCommonStyles()}
         <div class="container">
           <div class="header">
-            <h1>Welcome, ${username}!</h1>
+            <h1>Welcome, ${options.username}!</h1>
           </div>
           <div class="content">
             <p>Thank you for joining Your App! We're thrilled to have you on board.</p>
@@ -59,10 +60,11 @@ export class MailService {
     });
   }
 
-  async sendResetPasswordEmail(email: string, username: string, resetLink: string): Promise<void> {
+  async sendResetPasswordEmail(data: any): Promise<void> {
+    const options: { email: string, username: string, resetLink: string } = data
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
+      to: options.email,
       subject: 'Reset Your Password 🔒',
       html: `
         ${this.getCommonStyles()}
@@ -72,7 +74,7 @@ export class MailService {
           </div>
           <div class="content">
             <p>We received a request to reset your password. Click the button below to set a new password:</p>
-            <a href="${resetLink}" class="button">Reset Password</a>
+            <a href="${options.resetLink}" class="button">Reset Password</a>
             <p>This link will expire in 1 hour for security reasons.</p>
             <p>If you didn't request this, please ignore this email.</p>
           </div>
@@ -84,10 +86,11 @@ export class MailService {
     });
   }
 
-  async sendForgetPasswordEmail(email: string, resetLink: string): Promise<void> {
+  async sendForgetPasswordEmail(data: any): Promise<void> {
+    const options: { email: string, resetLink: string } = data
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
+      to: options.email,
       subject: 'Forgot Your Password? 🔑',
       html: `
         ${this.getCommonStyles()}
@@ -97,7 +100,7 @@ export class MailService {
           </div>
           <div class="content">
             <p>No worries! Click the button below to set a new password:</p>
-            <a href="${resetLink}" class="button">Set New Password</a>
+            <a href="${options.resetLink}" class="button">Set New Password</a>
             <p>This link will expire in 1 hour for your security.</p>
             <p>If you didn't request this, please ignore this email.</p>
           </div>
@@ -109,16 +112,17 @@ export class MailService {
     });
   }
 
-  async sendThanksEmail(email: string,username: string, resetLink: string): Promise<void> {
+  async sendThanksEmail(data: any): Promise<void> {
+    const options: { email: string,username: string, resetLink: string } = data
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
+      to: options.email,
       subject: 'Thank You for Your Support! 🙌',
       html: `
         ${this.getCommonStyles()}
         <div class="container">
           <div class="header">
-            <h1>Thank You, ${username}!</h1>
+            <h1>Thank You, ${options.username}!</h1>
           </div>
           <div class="content">
             <p>We truly appreciate your support and trust in Your App.</p>
@@ -133,19 +137,20 @@ export class MailService {
     });
   }
 
-  async sendEventsEmail(email: string, eventName: string, eventDate: string): Promise<void> {
+  async sendEventsEmail(data: any): Promise<void> {
+    const options: { email: string; eventName: string; eventDate: string } = data
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
-      subject: `Join Our Event: ${eventName} 🎈`,
+      to: options.email,
+      subject: `Join Our Event: ${options.eventName} 🎈`,
       html: `
         ${this.getCommonStyles()}
         <div class="container">
           <div class="header">
-            <h1>You're Invited to ${eventName}!</h1>
+            <h1>You're Invited to ${options.eventName}!</h1>
           </div>
           <div class="content">
-            <p><strong>Date:</strong> ${eventDate}</p>
+            <p><strong>Date:</strong> ${options.eventDate}</p>
             <p>Join us for an exciting event filled with fun and surprises!</p>
             <a href="https://yourapp.com/events" class="button">RSVP Now</a>
           </div>
@@ -157,10 +162,11 @@ export class MailService {
     });
   }
 
-  async sendNotificationEmail(email: string, message: string): Promise<void> {
+  async sendNotificationEmail(data: any): Promise<void> {
+    const options: { email: string; message: string } = data
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
+      to: options.email,
       subject: 'New Notification 🔔',
       html: `
         ${this.getCommonStyles()}
@@ -169,7 +175,7 @@ export class MailService {
             <h1>Notification</h1>
           </div>
           <div class="content">
-            <p>${message}</p>
+            <p>${options.message}</p>
             <a href="https://yourapp.com/notifications" class="button">View Details</a>
           </div>
           <div class="footer">
@@ -180,11 +186,13 @@ export class MailService {
     });
   }
 
-  async sendOrderEmail(email: string, orderId: string, orderDetails: object): Promise<void> {
+  async sendOrderEmail(data: any): Promise<void> {
+    const options: { email: string, orderId: string, orderDetails: object} = data
+    console.log(options)
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
-      subject: `Order Confirmation: ${orderId} 🛒`,
+      to: options.email,
+      subject: `Order Confirmation: ${options.orderId} 🛒`,
       html: `
         ${this.getCommonStyles()}
         <div class="container">
@@ -192,11 +200,11 @@ export class MailService {
             <h1>Order Confirmation</h1>
           </div>
           <div class="content">
-            <p><strong>Order ID:</strong> ${orderId}</p>
+            <p><strong>Order ID:</strong> ${options.orderId}</p>
             <p><strong>Details:</strong></p>
-            <pre style="background: #f8f8f8; padding: 10px; border-radius: 4px;">${JSON.stringify(orderDetails, null, 2)}</pre>
+            <pre style="background: #f8f8f8; padding: 10px; border-radius: 4px;">${JSON.stringify(options.orderDetails, null, 2)}</pre>
             <p>Thank you for your purchase! We'll notify you when your order ships.</p>
-            <a href="https://yourapp.com/orders/${orderId}" class="button">Track Order</a>
+            <a href="https://yourapp.com/orders/${options.orderId}" class="button">Track Order</a>
           </div>
           <div class="footer">
             <p>© ${new Date().getFullYear()} Your App. All rights reserved.</p>

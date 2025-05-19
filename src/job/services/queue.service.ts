@@ -69,7 +69,7 @@ export class QueueAdapter {
         queueName: string,
         prevJobId: string | null = null
       ) => {
-        let queueNameParant = ""
+        let queueNamePrev = ""
         return childData.map((data, index) => {
           // Tạo ID duy nhất cho job
           const uniqueJobId = `${parentId || 'root'}_child_${index}_${Date.now()}`;
@@ -82,11 +82,6 @@ export class QueueAdapter {
             ...childJobDataGenerator(index),
           };
           
-          // Nếu bật chức năng truyền kết quả và có job trước đó
-          if (enableChainResults && prevJobId && index > 0) {
-            childDataWithParent.previousJobId = prevJobId;
-          }
-          
           const childNode: any = {
             name: data.name,
             queueName: data.queueName || queueName,
@@ -98,25 +93,15 @@ export class QueueAdapter {
           };
           
           // Nếu bật chức năng truyền kết quả và có job trước đó
-          if (enableChainResults && prevJobId && index > 0 && queueNameParant != "") {
+          if (enableChainResults && prevJobId && index > 0 && queueNamePrev != "") {
             childNode.opts.dependencies = [prevJobId];
             childNode.opts.processDependenciesResults = true;
-            childNode.data.queueNameParant = queueNameParant
+            childNode.data.queueNamePrev = queueNamePrev
           }
           
           // Lưu jobId hiện tại để sử dụng cho job tiếp theo
           prevJobId = uniqueJobId;
-          queueNameParant = childNode.queueName
-          // Nếu có children, gọi đệ quy để xử lý job con lồng
-          if (data.children && Array.isArray(data.children)) {
-            childNode.children = buildChildren(
-              data.children, 
-              parentId, 
-              data.queueName || queueName,
-              null // Reset trạng thái cho các child jobs
-            );
-          }
-          
+          queueNamePrev = childNode.queueName
           return childNode;
         });
       };
@@ -126,8 +111,8 @@ export class QueueAdapter {
         name: parentJob.name,
         queueName: queue.name,
         data: parentJob.data,
-        opts: parentJob.opts,
-        children: buildChildren(dataChild, parentJob.id, queue.name, previousJobId),
+        opts: parentJob.opts || {},
+        children: await buildChildren(dataChild, parentJob.id, queue.name, previousJobId),
       });
       
       // Lấy ID của các child jobs (bao gồm cả grandchild jobs)

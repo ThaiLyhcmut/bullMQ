@@ -38,25 +38,9 @@ export class JobsService {
   async onModuleInit() {
     console.log("create onModuleInit")
     try {
-      await this.setupJobs('../../../src/job/data/post.json');
-    } catch (e) {
-      this.logger.error(e)
-    }
-    // try {
-    //   await this.setupJobs('../../../src/job/data/email.json');
-    // }catch (e) {
-    //   this.logger.error(e)
-    // }
-
-
-    this.logger.log('JobsService module initialized');
-  }
-  // Thiết lập jobs từ file JSON (cron jobs và regular jobs)
-  private async setupJobs(pathurl: string) {
-    try {
-      const configPath = path.resolve(__dirname, pathurl);
-      this.logger.log(`Reading jobs from ${configPath}`);
-      const rawData = await fs.readFile(configPath, 'utf-8');
+      const pathUri = path.resolve(__dirname, '../../../src/job/data/post.json');
+      this.logger.log(`Reading jobs from ${pathUri}`);
+      const rawData = await fs.readFile(pathUri, 'utf-8');
       const jobs: Array<{
         queueName: string;
         name: string;
@@ -64,8 +48,24 @@ export class JobsService {
         data: any;
         options?: JobsOptions
       }> = JSON.parse(rawData);
+      await this.setupJobs(jobs)
 
+    } catch (e) {
+      this.logger.error(e)
+    }
+    this.logger.log('JobsService module initialized');
+  }
+  // Thiết lập jobs từ file JSON (cron jobs và regular jobs)
+  private async setupJobs(jobs: Array<{
+    queueName: string;
+    name: string;
+    cronPattern?: string;
+    data: any;
+    options?: JobsOptions
+  }>) {
+    try {
       for (const job of jobs) {
+        console.log(job.data)
         const { queueName, name, cronPattern, data, options } = job;
         if (!queueName || !name || !data) {
           this.logger.warn(`Invalid job config: ${JSON.stringify(job)}`);
@@ -115,7 +115,6 @@ export class JobsService {
       });
     }
   }
-  // Thêm job vào queue với các tùy chọn
   async addJob(queueName: string, name: string, data: any, options: JobsOptions = {}): Promise<Job> {
     const queue = await this.getQueue(queueName);
 
@@ -143,8 +142,6 @@ export class JobsService {
     let job: Job;
     if (data.type === 'WAITING_CHILDREN' && data.childJobs?.length > 0) {
       job = await queue.add(name, data, options);
-
-      // Thêm tham số enableChainResults nếu cần truyền kết quả giữa các child jobs
       const enableChainResults = data.enableChainResults === true;
 
       const childJobIds = await this.queueAdapter.createChildJobs(
@@ -157,7 +154,7 @@ export class JobsService {
           options: data.childJobs[index].options || {},
         }),
         enableChainResults // Truyền tham số mới
-        
+
       );
 
       this.logger.log(`Đã thiết lập job ${job.id} với ${childJobIds.length} child jobs ${enableChainResults ? 'có' : 'không'} truyền kết quả`);

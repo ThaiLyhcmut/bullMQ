@@ -10,6 +10,8 @@ import { DatabaseModule } from './database/database.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RegisterServiceModule } from './processor/register.module'; 
 import { RedisModule } from './redis/redis.module';
+import { PostModule } from './post/post.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -24,8 +26,6 @@ import { RedisModule } from './redis/redis.module';
       adapter: ExpressAdapter,
     }),
     RegisterServiceModule,
-    JobsModule,
-    DatabaseModule,
     RedisModule,
     ScheduleModule.forRoot() // Remove schedulerConfig as it's not a valid option
   ],

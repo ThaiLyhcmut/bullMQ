@@ -15,17 +15,6 @@
       "enableChainResults": true,
       "childJobs": [
         {
-          "name": "PostService.DelayedJob",
-          "queueName": "posts",
-          "data": {
-            "db_type": "insert",
-            "type": "LASTEST"          
-          },
-          "options": {
-            "removeOnComplete": false
-          }
-        },
-        {
           "name": "PostService.PriorityJob",
           "queueName": "posts",
           "data": {
@@ -50,6 +39,79 @@
           },
           "options": {
             "delay": 3000,
+            "removeOnComplete": false
+          }
+        }
+      ]
+    },
+    "options": {
+      "removeOnComplete": false
+    }
+  },
+  {
+    "name": "PostService.ParentJob",
+    "queueName": "posts",
+    "data": {
+      "type": "WAITING_CHILDREN",
+      "enableChainResults": true,
+      "childJobs": [
+        {
+          "queueName": "database",
+          "name": "DatabaseService.executeAggregation",
+          "data": {
+            "type": "LASTEST",
+            "collectionName": "posts",
+            "pipeline": [
+              {
+                "$sort": {
+                  "createdAt": -1
+                }
+              },
+              {
+                "$limit": 2
+              }
+            ]
+          },
+          "options": {
+            "removeOnComplete": false
+          }
+        },
+        {
+          "queueName": "posts",
+          "name": "PostService.LatestJob",
+          "data": {
+            "type": "LASTEST",
+            "massage": "Test posts service"
+          },
+          "options": {
+            "removeOnComplete": false
+          }
+        },
+        {
+          "queueName": "email",
+          "name": "MailService.sendOrderEmail",
+          "data": {
+            "type": "LASTEST",
+            "orderId": "ORD124",
+            "email": "thai.lydznhatlop2k4@hcmut.edu.vn",
+            "orderDetails": {
+              "item": "Product X",
+              "price": 99.99
+            }
+          },
+          "options": {
+            "removeOnComplete": false
+          }
+        },
+        {
+          "queueName": "database",
+          "name": "DatabaseService.executeQuery",
+          "data": {
+            "type": "LASTEST",
+            "collectionName": "posts",
+            "operation": "insert"
+          },
+          "options": {
             "removeOnComplete": false
           }
         }

@@ -4,12 +4,10 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { JobsService } from './services/job.service';
-import { JobsController } from './controllers/job.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseService } from './services/database.service';
 import { QueueAdapter } from './services/queue.service';
-import { QueueController } from './controllers/queue.controller';
 import { RedisModule } from 'src/redis/redis.module';
 // import { ProcessorModule } from 'src/processor/processor.module';
 const jobNames = ['posts', 'resize', 'email', 'report'];
@@ -23,12 +21,13 @@ const bullBoardModules = jobNames.map(name =>
     adapter: BullMQAdapter,
   }),
 );
+
 @Module({
   imports: [
     MongooseModule,
     RedisModule,
   ],
-  controllers: [JobsController, QueueController],
+  controllers: [],
   providers: [JobsService, DatabaseService, QueueAdapter],
   exports: [JobsService, QueueAdapter, DatabaseService]
 })

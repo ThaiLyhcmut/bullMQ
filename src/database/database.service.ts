@@ -21,11 +21,11 @@ export class DatabaseService implements OnModuleInit {
   async onModuleInit() {
     // Danh sách các queue cần khởi tạo collection
     const queueNames = ['email', 'posts'];
-    
+
     for (const name of queueNames) {
       await this.getOrCreateCollection(name);
     }
-    
+
     this.logger.log('Đã khởi tạo tất cả collections cho DatabaseService');
   }
 
@@ -37,20 +37,14 @@ export class DatabaseService implements OnModuleInit {
     try {
       // Kiểm tra collection đã tồn tại chưa
       const collections = await this.db.listCollections({ name }).toArray();
-      
+
       if (collections.length === 0) {
         await this.db.createCollection(name);
         this.logger.log(`Đã tạo collection mới: ${name}`);
       }
-      
+
       const collection = this.db.collection(name);
-      
-      // Tạo index nếu chưa có
-      await collection.createIndex({ bullMQjobID: 1 }, { 
-        unique: true,
-        background: true
-      });
-      
+
       this.collections.set(name, collection);
       this.logger.log(`Đã khởi tạo collection: ${name}`);
       return collection;
@@ -64,26 +58,33 @@ export class DatabaseService implements OnModuleInit {
    * Execute a raw MongoDB query on a specified collection
    */
   async executeQuery(
-    collectionName: string,
-    query: Record<string, any> | Record<string, any>[],
-    operation: 'find' | 'insert' | 'update' | 'delete' | 'lookup' = 'find',
+    data: any
   ): Promise<any> {
+    const {
+      collectionName,
+      query,
+      operation = 'find'
+    }: {
+      collectionName: string,
+      query: Record<string, any> | Record<string, any>[] | undefined,
+      operation: 'find' | 'insert' | 'update' | 'delete' | 'lookup'
+    } = data
     try {
-      
+      console.log(data.previousResult)
       // Validate collection name
       if (!/^[a-zA-Z0-9_]+$/.test(collectionName)) {
         this.logger.warn(`Invalid collection name: ${collectionName}`);
         throw new Error('Invalid collection name');
       }
-      
+
       // Lấy hoặc tạo collection nếu chưa có
       const collection = await this.getOrCreateCollection(collectionName);
       this.logger.log(
         `Executing ${operation} query on collection ${collectionName}: ${JSON.stringify(query)}`,
       );
-      
+
       let result: any;
-      
+
       // Execute the query based on operation type
       switch (operation) {
         case 'find':
@@ -91,9 +92,17 @@ export class DatabaseService implements OnModuleInit {
           this.logger.log(`Find query returned ${result.length} results`);
           break;
         case 'insert':
-          result = await collection.insertMany(Array.isArray(query) ? query : [query]);
-          this.logger.log(`Inserted ${result.insertedCount} document(s)`);
-          break;
+          // Nếu có previousResult thì ưu tiên dùng previousResult
+          const insertData = data.previousResult ?? (Array.isArray(query) ? query : [query]);
+
+          if (Array.isArray(insertData)) {
+            result = await collection.insertMany(insertData);
+            this.logger.log(`Inserted ${result.insertedCount} document(s)`);
+          } else {
+            result = await collection.insertOne(insertData);
+            this.logger.log(`Inserted 1 document`);
+          }
+          break
         case 'update':
           result = await collection.updateMany(
             (query as Record<string, any>).filter || {},
@@ -114,7 +123,7 @@ export class DatabaseService implements OnModuleInit {
         default:
           throw new Error(`Unsupported operation: ${operation}`);
       }
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Query execution failed: ${error.message}`);
@@ -125,21 +134,25 @@ export class DatabaseService implements OnModuleInit {
   /**
    * Execute a raw MongoDB aggregation pipeline
    */
-  async executeAggregation(collectionName: string, pipeline: Record<string, any>[]): Promise<any[]> {
+  async executeAggregation(data: any): Promise<any[]> {
+    const {
+      collectionName, pipeline
+    }: { collectionName: string, pipeline: Record<string, any>[] } = data
+
     try {
       // Validate collection name
       if (!/^[a-zA-Z0-9_]+$/.test(collectionName)) {
         this.logger.warn(`Invalid collection name: ${collectionName}`);
         throw new Error('Invalid collection name');
       }
-      
+
       // Lấy hoặc tạo collection
       const collection = await this.getOrCreateCollection(collectionName);
-      
+
       this.logger.log(
         `Executing aggregation on collection ${collectionName}: ${JSON.stringify(pipeline)}`,
       );
-      
+
       // Execute the aggregation pipeline
       const results = await collection.aggregate(pipeline).toArray();
       this.logger.log(`Aggregation returned ${results.length} results`);
