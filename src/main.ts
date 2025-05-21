@@ -6,12 +6,6 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.getHttpAdapter().get('/', (req, res: any) => {
-    res.render('index', { 
-      title: 'Flexible Filter API',
-      apiUrl: '/docs'  // Changed from /views to /docs to match Swagger endpoint
-    });
-  });
 
   // Thiết lập global prefix  
   // Thiết lập global validation pipe

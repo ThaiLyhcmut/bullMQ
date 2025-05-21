@@ -33,6 +33,10 @@ export class JobsService {
     });
     console.log("HELLO")
   }
+  
+  async converJson() {
+
+  }
 
   // Defer job setup until module initialization
   async onModuleInit() {
@@ -41,13 +45,20 @@ export class JobsService {
       const pathUri = path.resolve(__dirname, '../../../src/job/data/post.json');
       this.logger.log(`Reading jobs from ${pathUri}`);
       const rawData = await fs.readFile(pathUri, 'utf-8');
-      const jobs: Array<{
+      let jobs: Array<{
         queueName: string;
         name: string;
+        service: {
+          serviceName: string,
+          functionName: string
+        }
         cronPattern?: string;
         data: any;
         options?: JobsOptions
       }> = JSON.parse(rawData);
+      
+      
+
       await this.setupJobs(jobs)
 
     } catch (e) {
@@ -59,12 +70,17 @@ export class JobsService {
   private async setupJobs(jobs: Array<{
     queueName: string;
     name: string;
+    service: {
+      serviceName: string,
+      functionName: string
+    }
     cronPattern?: string;
     data: any;
     options?: JobsOptions
   }>) {
     try {
       for (const job of jobs) {
+        job.name = `${job.service.serviceName}.${job.service.functionName}`
         console.log(job.data)
         const { queueName, name, cronPattern, data, options } = job;
         if (!queueName || !name || !data) {
@@ -141,23 +157,30 @@ export class JobsService {
     }
     let job: Job;
     if (data.type === 'WAITING_CHILDREN' && data.childJobs?.length > 0) {
-      job = await queue.add(name, data, options);
+      // job = await queue.add(name, data, options);
+      const parent: any = {
+        name: name,
+        data: data,
+        opts: options
+      }
       const enableChainResults = data.enableChainResults === true;
 
-      const childJobIds = await this.queueAdapter.createChildJobs(
-        job,
+      const jobParent = await this.queueAdapter.createChildJobs(
+        parent,
         queue,
         data.childJobs,
         (index) => ({
-          parentId: job.id,
           index,
           options: data.childJobs[index].options || {},
         }),
         enableChainResults // Truyền tham số mới
 
       );
-
-      this.logger.log(`Đã thiết lập job ${job.id} với ${childJobIds.length} child jobs ${enableChainResults ? 'có' : 'không'} truyền kết quả`);
+      if (jobParent) {
+        job = jobParent
+      } else {
+        job = await queue.add(name, data, options)
+      }
     } else {
       job = await queue.add(name, data, options);
       this.logger.log(`Đã thêm job ${name} vào queue ${queueName} - ID: ${job.id} - Type: ${data.type}`);

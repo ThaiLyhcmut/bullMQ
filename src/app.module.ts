@@ -1,5 +1,5 @@
 // Tạo file src/app.module.ts
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
@@ -12,6 +12,7 @@ import { RegisterServiceModule } from './processor/register.module';
 import { RedisModule } from './redis/redis.module';
 import { PostModule } from './post/post.module';
 import { MailModule } from './mail/mail.module';
+import { RedisCacheMiddleware } from './middelware';
 
 @Module({
   imports: [
@@ -32,4 +33,10 @@ import { MailModule } from './mail/mail.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RedisCacheMiddleware)
+      .forRoutes('*');
+  }
+}

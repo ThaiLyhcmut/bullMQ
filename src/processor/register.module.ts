@@ -28,9 +28,6 @@ const createProcessorClass = (queueName: string) => {
       if (job.data.type == "WATTING_CHILDREN" ) {
         job.isWaitingChildren()
       }
-      if (job.data.codition != "") {
-        
-      }
       try {
         const [serviceName, methodName] = job.name.split('.');
         if (!serviceName || !methodName) {
@@ -74,7 +71,13 @@ const createProcessorClass = (queueName: string) => {
         }
 
         try {
-          return await service[methodName](job.data);
+          const dataInput = {};
+          (job.data.dataOptions as Array<Object>).forEach((item: any) => {
+            const keyValue = `value_${item.dataType}`
+            dataInput[`${item.dataName}`] = item[keyValue];
+          })
+          console.log(dataInput)
+          // return await service[methodName](job.data);
         } catch (err) {
           throw new Error(`Lỗi khi gọi ${serviceName}.${methodName} với data ${JSON.stringify(job.data)}: ${err.message}`);
         }

@@ -35,8 +35,7 @@ export class MailService {
     `;
   }
 
-  async sendRegisterEmail(data: any): Promise<void> {
-    const options: { email: string, username: string } = data
+  async sendRegisterEmail(options: { email: string, username: string }): Promise<void> {
     return await this.transporter.sendMail({
       from: '"Your App" <no-reply@yourapp.com>',
       to: options.email,

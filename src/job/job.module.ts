@@ -9,18 +9,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseService } from './services/database.service';
 import { QueueAdapter } from './services/queue.service';
 import { RedisModule } from 'src/redis/redis.module';
-// import { ProcessorModule } from 'src/processor/processor.module';
-const jobNames = ['posts', 'resize', 'email', 'report'];
-const bullQueues = jobNames.map(name => ({
-  name,
-}));
-
-const bullBoardModules = jobNames.map(name =>
-  BullBoardModule.forFeature({
-    name,
-    adapter: BullMQAdapter,
-  }),
-);
 
 @Module({
   imports: [
