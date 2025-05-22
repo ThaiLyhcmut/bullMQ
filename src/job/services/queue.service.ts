@@ -108,6 +108,12 @@ export class QueueAdapter {
           // Lưu jobId hiện tại để sử dụng cho job tiếp theo
           prevJobId = uniqueJobId;
           queueNamePrev = childNode.queueName
+          
+          if (childNode.type === "WATTING_CHILDREN") {
+            const children = buildChildren(childNode.childJobs, uniqueJobId, childNode, queue.name)
+            console.log(children)
+            childNode.children = children
+          }
           return childNode;
         });
       };

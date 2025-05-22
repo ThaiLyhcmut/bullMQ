@@ -2,23 +2,49 @@
   {
     "queueName": "posts",
     "name": "PostService.LatestJob",
+    "service": {
+      "serviceName": "PostService",
+      "functionName": "LatestJob"
+    },
     "data": {
       "type": "LASTED",
-      "massage": "CREATE POST SUCCESS"
+      "dataOptions": [
+        {
+          "dataName": "massage",
+          "dataType": "string",
+          "value_string": "CREATE POST SUCCESS"
+        }
+      ]
     }
   },
   {
     "queueName": "posts",
     "name": "PostService.ParentJob",
+    "service": {
+      "serviceName": "PostService",
+      "functionName": "ParentJob"
+    },
     "data": {
       "type": "WAITING_CHILDREN",
       "enableChainResults": true,
+      "dataOptions":[],
       "childJobs": [
         {
           "name": "PostService.PriorityJob",
           "queueName": "posts",
+          "service": {
+            "serviceName": "PostService",
+            "functionName": "PriorityJob"
+          },
           "data": {
-            "type": "PRIORITIZED"
+            "type": "PRIORITIZED",
+            "dataOptions": [
+              {
+                "dataName": "priority",
+                "dataType": "number",
+                "value_number": 2
+              }
+            ]
           },
           "options": {
             "priority": 2
@@ -27,15 +53,32 @@
         {
           "name": "MailService.sendOrderEmail",
           "queueName": "email",
+          "service": {
+            "serviceName": "MailService",
+            "functionName": "sendOrderEmail"
+          },
           "data": {
-            "email": "thai.lydznhatlop2k4@hcmut.edu.vn",
-            "orderId": "ORD123",
-            "orderDetails": {
-              "item": "Product X",
-              "price": 99.99
-            },
             "type": "DELAYED",
-            "delay": 3000
+            "dataOptions": [
+              {
+                "dataName": "email",
+                "dataType": "string",
+                "value_string": "thai.lydznhatlop2k4@hcmut.edu.vn"
+              },
+              {
+                "dataName": "orderId",
+                "dataType": "string",
+                "value_string": "ORD123"
+              },
+              {
+                "dataName": "orderDetails",
+                "dataType": "object",
+                "value_object": {
+                  "item": "Product X",
+                  "price": 99.99
+                }
+              }
+            ]
           },
           "options": {
             "delay": 3000,
@@ -51,24 +94,45 @@
   {
     "name": "PostService.ParentJob",
     "queueName": "posts",
+    "service": {
+      "serviceName": "PostService",
+      "functionName": "ParentJob"
+    },
     "data": {
       "type": "WAITING_CHILDREN",
       "enableChainResults": true,
+      "dataOptions": [
+
+      ],
       "childJobs": [
         {
           "queueName": "database",
           "name": "DatabaseService.executeAggregation",
+          "service": {
+            "serviceName": "DatabaseService",
+            "functionName": "executeAggregation"
+          },
           "data": {
             "type": "LASTEST",
-            "collectionName": "posts",
-            "pipeline": [
+            "dataOptions": [
               {
-                "$sort": {
-                  "createdAt": -1
-                }
+                "dataName": "collectionName",
+                "dataType": "string",
+                "value_string": "posts"
               },
               {
-                "$limit": 2
+                "dataName": "pipeline",
+                "dataType": "array",
+                "value_array": [
+                  {
+                    "$sort": {
+                      "createdAt": -1
+                    }
+                  },
+                  {
+                    "$limit": 2
+                  }
+                ]
               }
             ]
           },
@@ -79,9 +143,19 @@
         {
           "queueName": "posts",
           "name": "PostService.LatestJob",
+          "service": {
+            "serviceName": "PostService",
+            "functionName": "LatestJob"
+          },
           "data": {
             "type": "LASTEST",
-            "massage": "Test posts service"
+            "dataOptions": [
+              {
+                "dataName": "massage",
+                "dataType": "string",
+                "value_string": "Test posts service"
+              }
+            ]
           },
           "options": {
             "removeOnComplete": false
@@ -90,14 +164,32 @@
         {
           "queueName": "email",
           "name": "MailService.sendOrderEmail",
+          "service": {
+            "serviceName": "MailService",
+            "functionName": "sendOrderEmail"
+          },
           "data": {
             "type": "LASTEST",
-            "orderId": "ORD124",
-            "email": "thai.lydznhatlop2k4@hcmut.edu.vn",
-            "orderDetails": {
-              "item": "Product X",
-              "price": 99.99
-            }
+            "dataOptions": [
+              {
+                "dataName": "orderId",
+                "dataType": "string",
+                "value_string": "ORD124"
+              },
+              {
+                "dataName": "email",
+                "dataType": "string",
+                "value_string": "thai.lydznhatlop2k4@hcmut.edu.vn"
+              },
+              {
+                "dataName": "orderDetails",
+                "dataType": "object",
+                "value_object": {
+                  "item": "Product X",
+                  "price": 99.99
+                }
+              }
+            ]
           },
           "options": {
             "removeOnComplete": false
@@ -106,10 +198,24 @@
         {
           "queueName": "database",
           "name": "DatabaseService.executeQuery",
+          "service": {
+            "serviceName": "DatabaseService",
+            "functionName": "executeQuery"
+          },
           "data": {
             "type": "LASTEST",
-            "collectionName": "posts",
-            "operation": "insert"
+            "dataOptions": [
+              {
+                "dataName": "collectionName",
+                "dataType": "string",
+                "value_string": "posts"
+              },
+              {
+                "dataName": "operation",
+                "dataType": "string",
+                "value_string": "insert"
+              }
+            ]
           },
           "options": {
             "removeOnComplete": false

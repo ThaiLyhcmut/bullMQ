@@ -35,7 +35,7 @@ const createProcessorClass = (queueName: string) => {
         }
 
         const JobsOptions = job.opts as any;
-
+        const dataInput = {};
         // Kiểm tra và đợi job phụ thuộc nếu có
         if (JobsOptions.processDependenciesResults && JobsOptions.dependencies?.length > 0 && job.data.queueNamePrev) {
           try {
@@ -55,7 +55,8 @@ const createProcessorClass = (queueName: string) => {
             result['bullMQjobID_1'] = job.id
             // Gộp kết quả job phụ thuộc vào job.data nếu cần
             job.data.previousResult = result;
-            
+            dataInput['previousResult'] = result;
+            // Gán giá trị cho dataInput từ job phụ thuộc
             // Đóng QueueEvents để tránh rò rỉ tài nguyên
             // await parentQueue.close();
           } catch (err) {
@@ -71,13 +72,13 @@ const createProcessorClass = (queueName: string) => {
         }
 
         try {
-          const dataInput = {};
+          
           (job.data.dataOptions as Array<Object>).forEach((item: any) => {
             const keyValue = `value_${item.dataType}`
             dataInput[`${item.dataName}`] = item[keyValue];
           })
-          console.log(dataInput)
-          // return await service[methodName](job.data);
+          console.log("dataInputttttttttttttttttttttttt", dataInput)
+          return await service[methodName](dataInput);
         } catch (err) {
           throw new Error(`Lỗi khi gọi ${serviceName}.${methodName} với data ${JSON.stringify(job.data)}: ${err.message}`);
         }
