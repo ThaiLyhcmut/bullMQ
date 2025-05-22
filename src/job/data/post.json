@@ -18,80 +18,6 @@
     }
   },
   {
-    "queueName": "posts",
-    "name": "PostService.ParentJob",
-    "service": {
-      "serviceName": "PostService",
-      "functionName": "ParentJob"
-    },
-    "data": {
-      "type": "WAITING_CHILDREN",
-      "enableChainResults": true,
-      "dataOptions":[],
-      "childJobs": [
-        {
-          "name": "PostService.PriorityJob",
-          "queueName": "posts",
-          "service": {
-            "serviceName": "PostService",
-            "functionName": "PriorityJob"
-          },
-          "data": {
-            "type": "PRIORITIZED",
-            "dataOptions": [
-              {
-                "dataName": "priority",
-                "dataType": "number",
-                "value_number": 2
-              }
-            ]
-          },
-          "options": {
-            "priority": 2
-          }
-        },
-        {
-          "name": "MailService.sendOrderEmail",
-          "queueName": "email",
-          "service": {
-            "serviceName": "MailService",
-            "functionName": "sendOrderEmail"
-          },
-          "data": {
-            "type": "DELAYED",
-            "dataOptions": [
-              {
-                "dataName": "email",
-                "dataType": "string",
-                "value_string": "thai.lydznhatlop2k4@hcmut.edu.vn"
-              },
-              {
-                "dataName": "orderId",
-                "dataType": "string",
-                "value_string": "ORD123"
-              },
-              {
-                "dataName": "orderDetails",
-                "dataType": "object",
-                "value_object": {
-                  "item": "Product X",
-                  "price": 99.99
-                }
-              }
-            ]
-          },
-          "options": {
-            "delay": 3000,
-            "removeOnComplete": false
-          }
-        }
-      ]
-    },
-    "options": {
-      "removeOnComplete": false
-    }
-  },
-  {
     "name": "PostService.ParentJob",
     "queueName": "posts",
     "service": {
@@ -101,9 +27,7 @@
     "data": {
       "type": "WAITING_CHILDREN",
       "enableChainResults": true,
-      "dataOptions": [
-
-      ],
+      "dataOptions": [],
       "childJobs": [
         {
           "queueName": "database",
@@ -214,6 +138,80 @@
                 "dataName": "operation",
                 "dataType": "string",
                 "value_string": "insert"
+              }
+            ]
+          },
+          "options": {
+            "removeOnComplete": false
+          }
+        },
+        {
+          "queueName": "posts",
+          "name": "PostService.ParentJob",
+          "service": {
+            "serviceName": "PostService",
+            "functionName": "ParentJob"
+          },
+          "data": {
+            "type": "WAITING_CHILDREN",
+            "enableChainResults": true,
+            "dataOptions": [],
+            "childJobs": [
+              {
+                "name": "PostService.PriorityJob",
+                "queueName": "posts",
+                "service": {
+                  "serviceName": "PostService",
+                  "functionName": "PriorityJob"
+                },
+                "data": {
+                  "type": "PRIORITIZED",
+                  "dataOptions": [
+                    {
+                      "dataName": "priority",
+                      "dataType": "number",
+                      "value_number": 2
+                    }
+                  ]
+                },
+                "options": {
+                  "priority": 2
+                }
+              },
+              {
+                "name": "MailService.sendOrderEmail",
+                "queueName": "email",
+                "service": {
+                  "serviceName": "MailService",
+                  "functionName": "sendOrderEmail"
+                },
+                "data": {
+                  "type": "DELAYED",
+                  "dataOptions": [
+                    {
+                      "dataName": "email",
+                      "dataType": "string",
+                      "value_string": "thai.lydznhatlop2k4@hcmut.edu.vn"
+                    },
+                    {
+                      "dataName": "orderId",
+                      "dataType": "string",
+                      "value_string": "ORD123"
+                    },
+                    {
+                      "dataName": "orderDetails",
+                      "dataType": "object",
+                      "value_object": {
+                        "item": "Product X",
+                        "price": 99.99
+                      }
+                    }
+                  ]
+                },
+                "options": {
+                  "delay": 3000,
+                  "removeOnComplete": false
+                }
               }
             ]
           },

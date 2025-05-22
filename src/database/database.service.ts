@@ -70,7 +70,6 @@ export class DatabaseService implements OnModuleInit {
       operation: 'find' | 'insert' | 'update' | 'delete' | 'lookup'
     } = data
     try {
-      console.log(data.previousResult)
       // Validate collection name
       if (!/^[a-zA-Z0-9_]+$/.test(collectionName)) {
         this.logger.warn(`Invalid collection name: ${collectionName}`);
@@ -135,11 +134,9 @@ export class DatabaseService implements OnModuleInit {
    * Execute a raw MongoDB aggregation pipeline
    */
   async executeAggregation(data: any): Promise<any[]> {
-    console.log("dataaaaaaaaa", data)
     const {
       collectionName, pipeline
     }: { collectionName: string, pipeline: Record<string, any>[] } = data
-    console.log("ccccccccc",collectionName, pipeline)
     try {
       // Validate collection name
       if (!/^[a-zA-Z0-9_]+$/.test(collectionName)) {

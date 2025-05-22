@@ -81,7 +81,6 @@ export class JobsService {
     try {
       for (const job of jobs) {
         job.name = `${job.service.serviceName}.${job.service.functionName}`
-        console.log(job.data)
         const { queueName, name, cronPattern, data, options } = job;
         if (!queueName || !name || !data) {
           this.logger.warn(`Invalid job config: ${JSON.stringify(job)}`);

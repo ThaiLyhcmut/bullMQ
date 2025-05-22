@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Job, Queue, FlowProducer, ConnectionOptions, JobsOptions } from 'bullmq';
+import { JobsService } from './job.service';
 
 /**
  * QueueAdapter - Service để quản lý parent-child jobs trong BullMQ
@@ -9,12 +10,12 @@ import { Job, Queue, FlowProducer, ConnectionOptions, JobsOptions } from 'bullmq
 export class QueueAdapter {
   private readonly logger = new Logger(QueueAdapter.name);
   private readonly flowProducer: FlowProducer;
-
   constructor() {
     const connection: ConnectionOptions = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || "6379") || 6379,
     };
+    
     if (process.env.REDIS_PASSWORD) {
       connection.password = process.env.REDIS_PASSWORD;
     }
@@ -89,31 +90,20 @@ export class QueueAdapter {
               jobId: uniqueJobId,
             },
           };
-          // if (data.type == 'WATTING_CHILDREN') {
-          //   childNode = this.createChildJobs(
-          //     childNode,
-              
-          //   ) as any
-          // }
+          if (childNode.data.type === "WAITING_CHILDREN") {
+            const children = buildChildren(childNode.data.childJobs, uniqueJobId, childNode.queueName , prevJobId);
 
-          
-
+            childNode.children = children
+          }
           // Nếu bật chức năng truyền kết quả và có job trước đó
           if (enableChainResults && prevJobId && index > 0 && queueNamePrev != "") {
             childNode.opts.dependencies = [prevJobId];
             childNode.opts.processDependenciesResults = true;
             childNode.data.queueNamePrev = queueNamePrev
           }
-
           // Lưu jobId hiện tại để sử dụng cho job tiếp theo
           prevJobId = uniqueJobId;
-          queueNamePrev = childNode.queueName
-          
-          if (childNode.type === "WATTING_CHILDREN") {
-            const children = buildChildren(childNode.childJobs, uniqueJobId, childNode, queue.name)
-            console.log(children)
-            childNode.children = children
-          }
+          queueNamePrev = childNode.queueName;
           return childNode;
         });
       };

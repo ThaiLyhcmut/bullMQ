@@ -25,7 +25,7 @@ const createProcessorClass = (queueName: string) => {
     }
     async process(job: Job): Promise<any> {
       this.logger.log(`Xử lý job từ queue ${queueName}: ${job.id} (${job.name})`);
-      if (job.data.type == "WATTING_CHILDREN" ) {
+      if (job.data.type == "WAITING_CHILDREN") {
         job.isWaitingChildren()
       }
       try {
@@ -48,23 +48,17 @@ const createProcessorClass = (queueName: string) => {
             }
             const jobId = JobsOptions.dependencies[0];
             this.logger.log(`Đang đợi job phụ thuộc ${jobId} từ queue ${parentQueueName}`);
-            const prevJob:Job = await parentQueue.getJob(jobId);
+            const prevJob: Job = await parentQueue.getJob(jobId);
             const result = await prevJob.waitUntilFinished(parentQueueEvent)
             this.logger.log(`Job phụ thuộc ${jobId} hoàn thành với kết quả: ${JSON.stringify(result)}`);
-            console.log(result)
             result['bullMQjobID_1'] = job.id
-            // Gộp kết quả job phụ thuộc vào job.data nếu cần
             job.data.previousResult = result;
             dataInput['previousResult'] = result;
-            // Gán giá trị cho dataInput từ job phụ thuộc
-            // Đóng QueueEvents để tránh rò rỉ tài nguyên
-            // await parentQueue.close();
           } catch (err) {
             this.logger.warn(`Không thể lấy kết quả từ job phụ thuộc: ${err.message}`);
-            throw err; // Hoặc xử lý lỗi theo cách bạn muốn
+            throw err; 
           }
         }
-
         const service = this.moduleRef.get(serviceName, { strict: false });
         this.logger.log(`Thực thi ${serviceName}.${methodName} với data: ${JSON.stringify(job.data)}`);
         if (!service || typeof service[methodName] !== 'function') {
@@ -72,12 +66,11 @@ const createProcessorClass = (queueName: string) => {
         }
 
         try {
-          
+
           (job.data.dataOptions as Array<Object>).forEach((item: any) => {
             const keyValue = `value_${item.dataType}`
             dataInput[`${item.dataName}`] = item[keyValue];
           })
-          console.log("dataInputttttttttttttttttttttttt", dataInput)
           return await service[methodName](dataInput);
         } catch (err) {
           throw new Error(`Lỗi khi gọi ${serviceName}.${methodName} với data ${JSON.stringify(job.data)}: ${err.message}`);
@@ -131,4 +124,4 @@ const createProcessorClass = (queueName: string) => {
   ],
   exports: [BullModule],
 })
-export class RegisterServiceModule {}
+export class RegisterServiceModule { }
