@@ -1,12 +1,19 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module, Global } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import Redis from 'ioredis';
-import { RedisService } from './redis.service';
+import { redisStore } from 'cache-manager-redis-yet';
+import { RedisCacheMiddleware } from './middleware/redis.middleware.service';
+import { RedisCacheInterceptor } from './interceptor/redis.interceptor.service';
 
 @Global()
 @Module({
-  providers: [
-    RedisService
+  imports:[
+    
   ],
-  exports: [RedisService],
+  providers: [
+    
+  ],
+  exports: [],
 })
 export class RedisModule {}

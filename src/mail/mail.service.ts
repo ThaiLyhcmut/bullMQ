@@ -14,7 +14,7 @@ export class MailService {
       secure: false,
       auth: {
         user: process.env.SMTP_USER || 'lyvinhthai321@gmail.com',
-        pass: process.env.SMTP_PASS || 'ucvh ynac eygi etux',
+        pass: process.env.SMTP_PASS || 'cccccccccccc',
       },
     });
   }

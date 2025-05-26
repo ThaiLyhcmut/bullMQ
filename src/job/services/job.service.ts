@@ -42,7 +42,7 @@ export class JobsService {
   async onModuleInit() {
     console.log("create onModuleInit")
     try {
-      const pathUri = path.resolve(__dirname, '../../../src/job/data/post.json');
+      const pathUri = path.resolve(__dirname, '../../../src/job/data/email.json');
       this.logger.log(`Reading jobs from ${pathUri}`);
       const rawData = await fs.readFile(pathUri, 'utf-8');
       let jobs: Array<{
@@ -56,9 +56,54 @@ export class JobsService {
         data: any;
         options?: JobsOptions
       }> = JSON.parse(rawData);
-      
-      
 
+      const save: string[] = []
+      const jobsObject = {};
+      jobs.forEach((job) => {
+        if (job.data.type === 'WAITING_CHILDREN' && job.data.childJobs?.length > 0) {
+          const childJob = job.data.childJobs.map((childJob) => {
+            const index = jobs.findIndex((j) => j.name === childJob.childJobName);
+            if (index !== -1) {
+              save.push(childJob.childJobName);
+              return {
+                ...jobs[index],
+                name: `${jobs[index].service.serviceName}.${jobs[index].service.functionName}`,
+              }
+            }
+            return null;
+          }).filter((childJob) => childJob !== null);
+          console.log("childJob", childJob)
+          jobsObject[job.name] = {
+            ...job,
+            data: {
+              ...job.data,
+              childJobs: childJob,
+            },
+          };
+          
+        }
+        else {jobsObject[job.name] = job;}
+      });
+      const datas = Object.entries(jobsObject).map(([key, value]) => {
+        if (save.includes(key)) {
+          return null
+        }
+        return value;
+      }).filter((item) => item !== null);
+      jobs = datas as Array<{
+        queueName: string;
+        name: string;
+        service: {
+          serviceName: string,
+          functionName: string
+        }
+        cronPattern?: string;
+        data: any;
+        options?: JobsOptions
+      }>;
+      const outPath = path.resolve(__dirname, '../../../src/job/data/out.json');
+      await fs.writeFile(outPath, JSON.stringify(jobs, null, 2), 'utf-8');
+      this.logger.log(`Đã ghi jobs vào ${outPath}`);
       await this.setupJobs(jobs)
 
     } catch (e) {
@@ -81,6 +126,7 @@ export class JobsService {
     try {
       for (const job of jobs) {
         job.name = `${job.service.serviceName}.${job.service.functionName}`
+        console.log("job.name", job.name)
         const { queueName, name, cronPattern, data, options } = job;
         if (!queueName || !name || !data) {
           this.logger.warn(`Invalid job config: ${JSON.stringify(job)}`);

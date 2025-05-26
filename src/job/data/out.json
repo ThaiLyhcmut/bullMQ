@@ -1,0 +1,279 @@
+[
+  {
+    "name": "LatestJob_f8fc3d06",
+    "queueName": "posts",
+    "service": {
+      "serviceName": "PostService",
+      "functionName": "LatestJob"
+    },
+    "data": {
+      "type": "LASTEST",
+      "conditions": [],
+      "dataOptions": [
+        {
+          "dataName": "message",
+          "dataType": "string",
+          "value_string": "CREATE POST SUCCESS"
+        }
+      ],
+      "childJobs": []
+    },
+    "options": {
+      "list_options": []
+    }
+  },
+  {
+    "name": "ParentJob_806d351a",
+    "queueName": "posts",
+    "service": {
+      "serviceName": "PostService",
+      "functionName": "ParentJob"
+    },
+    "data": {
+      "type": "WAITING_CHILDREN",
+      "conditions": [],
+      "dataOptions": [
+        {
+          "dataName": "enableChainResults",
+          "dataType": "boolean",
+          "value_boolean": true
+        }
+      ],
+      "childJobs": [
+        {
+          "name": "PostService.PriorityJob",
+          "queueName": "posts",
+          "service": {
+            "serviceName": "PostService",
+            "functionName": "PriorityJob"
+          },
+          "data": {
+            "type": "PRIORITIZED",
+            "conditions": [],
+            "dataOptions": [],
+            "childJobs": []
+          },
+          "options": {
+            "list_options": [
+              "priority"
+            ],
+            "priority": 2
+          }
+        },
+        {
+          "name": "MailService.sendOrderEmail",
+          "queueName": "email",
+          "service": {
+            "serviceName": "MailService",
+            "functionName": "sendOrderEmail"
+          },
+          "data": {
+            "type": "DELAYED",
+            "conditions": [],
+            "dataOptions": [
+              {
+                "dataName": "email",
+                "dataType": "string",
+                "value_string": "thai.lydznhatlop2k4@hcmut.edu.vn"
+              },
+              {
+                "dataName": "orderId",
+                "dataType": "string",
+                "value_string": "ORD123"
+              },
+              {
+                "dataName": "orderDetails",
+                "dataType": "object",
+                "value_object": [
+                  {
+                    "object_item": [
+                      {
+                        "key": "item",
+                        "valueType": "string",
+                        "value_string": "Product X",
+                        "value_boolean": false
+                      },
+                      {
+                        "key": "price",
+                        "valueType": "number",
+                        "value_number": 99,
+                        "value_boolean": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "childJobs": []
+          },
+          "options": {
+            "list_options": [
+              "delay",
+              "removeOnComplete"
+            ],
+            "delay": 3000,
+            "removeOnComplete": {
+              "options": "false",
+              "objects": {}
+            }
+          }
+        }
+      ]
+    },
+    "options": {
+      "list_options": [
+        "delay",
+        "removeOnComplete"
+      ],
+      "delay": 3000,
+      "removeOnComplete": {
+        "options": "false",
+        "objects": {}
+      }
+    }
+  },
+  {
+    "name": "ParentJob_47a80b12",
+    "queueName": "posts",
+    "service": {
+      "serviceName": "PostService",
+      "functionName": "ParentJob"
+    },
+    "data": {
+      "type": "WAITING_CHILDREN",
+      "conditions": [],
+      "dataOptions": [
+        {
+          "dataName": "enableChainResults",
+          "dataType": "boolean",
+          "value_boolean": true
+        }
+      ],
+      "childJobs": [
+        {
+          "name": "DatabaseService.executeAggregation",
+          "queueName": "database",
+          "service": {
+            "serviceName": "DatabaseService",
+            "functionName": "executeAggregation"
+          },
+          "data": {
+            "type": "LASTEST",
+            "conditions": [],
+            "dataOptions": [
+              {
+                "dataName": "collectionName",
+                "dataType": "string",
+                "value_string": "posts"
+              }
+            ],
+            "childJobs": []
+          },
+          "options": {
+            "list_options": [
+              "removeOnComplete"
+            ],
+            "removeOnComplete": {
+              "options": "false",
+              "objects": {}
+            }
+          }
+        },
+        {
+          "name": "PostService.LatestJob",
+          "queueName": "posts",
+          "service": {
+            "serviceName": "PostService",
+            "functionName": "LatestJob"
+          },
+          "data": {
+            "type": "LASTEST",
+            "conditions": [],
+            "dataOptions": [
+              {
+                "dataName": "massage",
+                "dataType": "string",
+                "value_string": "Test posts service"
+              }
+            ],
+            "childJobs": []
+          },
+          "options": {
+            "list_options": [
+              "removeOnComplete"
+            ],
+            "removeOnComplete": {
+              "options": "false",
+              "objects": {}
+            }
+          }
+        },
+        {
+          "name": "MailService.sendOrderEmail",
+          "queueName": "email",
+          "service": {
+            "serviceName": "MailService",
+            "functionName": "sendOrderEmail"
+          },
+          "data": {
+            "type": "LASTEST",
+            "conditions": [],
+            "dataOptions": [
+              {
+                "dataName": "orderId",
+                "dataType": "string",
+                "value_string": "ORD124"
+              },
+              {
+                "dataName": "email",
+                "dataType": "string",
+                "value_string": "thai.lydznhatlop2k4@hcmut.edu.vn"
+              },
+              {
+                "dataName": "orderDetails",
+                "dataType": "object",
+                "value_object": [
+                  {
+                    "object_item": [
+                      {
+                        "key": "item",
+                        "valueType": "string",
+                        "value_string": "Product X",
+                        "value_boolean": false
+                      },
+                      {
+                        "key": "price",
+                        "valueType": "number",
+                        "value_number": 99,
+                        "value_boolean": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "childJobs": []
+          },
+          "options": {
+            "list_options": [
+              "removeOnComplete"
+            ],
+            "removeOnComplete": {
+              "options": "false",
+              "objects": {}
+            }
+          }
+        }
+      ]
+    },
+    "options": {
+      "list_options": [
+        "removeOnComplete"
+      ],
+      "removeOnComplete": {
+        "options": "false",
+        "objects": {}
+      }
+    }
+  }
+]

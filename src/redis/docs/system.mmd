@@ -1,0 +1,42 @@
+graph TD
+    A[Client Request] --> B[API Gateway Controller]
+    B --> C{Tầng URL Cache}
+    
+    C -->|Cache HIT| D[Return Cached Response]
+    C -->|Cache MISS| E[Route Handler Service]
+    
+    E --> F[Determine Controller & Method]
+    F --> G[Business Controller Method]
+    
+    G --> H{Tầng Validate Cache}
+    H -->|Cache HIT| I[Use Cached Validation]
+    H -->|Cache MISS| J[Execute Validation Logic]
+    J --> K[Cache Validation Result]
+    K --> L[Continue to Database]
+    I --> Lz
+    
+    L --> M{Tầng Database Cache}
+    M -->|Cache HIT| N[Return Cached Data]
+    M -->|Cache MISS| O[Execute Database Query]
+    O --> P[Cache Query Result]
+    P --> Q[Return Data]
+    N --> Q
+    
+    Q --> R[Cache at URL Level]
+    R --> S[Return Response to Client]
+    
+    style C fill:#ff9999
+    style H fill:#99ccff
+    style M fill:#99ff99
+    
+    subgraph "Cache Layers"
+        C
+        H
+        M
+    end
+    
+    subgraph "URL Routes Config"
+        T["/api/users/:id → UserController.findById"]
+        U["/api/products/:id → ProductController.findById"]
+        V["/api/orders → OrderController.findAll"]
+    end
